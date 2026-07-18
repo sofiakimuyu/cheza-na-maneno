@@ -1,11 +1,14 @@
 /* Safari ya Matatu — service worker.
    Caches every asset on install so the game installs as a PWA and works
    fully offline. Bump CACHE when you change any file. */
-const CACHE = "safari-ya-matatu-v1";
+const CACHE = "safari-ya-matatu-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./puzzles.js",
+  "./economy.js",
+  "./route.js",
+  "./journey.js",
   "./manifest.json",
   "./icon.svg",
   "./icon-maskable.svg",

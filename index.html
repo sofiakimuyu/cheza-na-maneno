@@ -257,6 +257,143 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .pill{display:inline-block; padding:3px 10px; border-radius:12px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#fff;}
 .pill.easy{background:var(--green);} .pill.medium{background:var(--yellow); color:var(--ink);}
 .pill.hard{background:var(--orange);} .pill.expert{background:var(--red);}
+
+/* ============================ JOURNEY LAYER ============================
+   Route map, arrival, journey end, scoreboard, debug.
+   Painted-sign vocabulary: hard shadows, thick strokes, flat colour blocks.
+   No transitions heavier than a transform — this has to run on a cheap
+   Android phone.
+   ====================================================================== */
+
+/* ---- route map: stops threaded onto the road ---- */
+#map{display:flex; flex-direction:column;}
+.kstop{position:relative; display:flex; align-items:center; justify-content:center;
+  min-height:58px; z-index:2;}
+.kmarker{width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  background:#cbb89a; border:4px solid #a58d68; color:#fff; font-size:1.15rem; font-weight:800;
+  box-shadow:0 4px 0 rgba(0,0,0,.22);}
+.kstop.done .kmarker{background:var(--green); border-color:var(--green-d);}
+.kstop.current .kmarker{background:var(--yellow); border-color:var(--red); animation:pulse 1.2s infinite;}
+.kstop.major .kmarker{width:56px; height:56px; border-width:5px;}
+.kstop.major.locked .kmarker{background:#bda98a;}
+
+.klabel{position:absolute; max-width:40%; padding:6px 12px; background:#fff; border-radius:12px;
+  box-shadow:0 3px 0 rgba(0,0,0,.15);}
+.kstop.left  .klabel{right:calc(50% + 34px); text-align:right;}
+.kstop.right .klabel{left:calc(50% + 34px);  text-align:left;}
+.kstop.locked .klabel{opacity:.72; background:#efe6d4;}
+.kstop.current .klabel{background:var(--yellow);}
+.kstop.major .klabel{border:3px solid var(--blue);}
+.kname{font-weight:800; font-size:.95rem; line-height:1.15;}
+.kmeta{font-size:.65rem; font-weight:700; color:var(--ink-soft); margin-top:1px;}
+
+/* road segment between two stops; hosts the fractional matatu */
+.kseg{position:relative; height:52px;}
+.kseg.done .ksegline, .ksegfill{position:absolute; left:50%; top:0; width:9px;
+  transform:translateX(-50%); border-radius:5px;}
+.kseg.done .ksegline{height:100%; background:var(--green);}
+/* Orange, not yellow — the road already has a yellow dashed centre line,
+   and yellow-on-yellow makes the progress fill invisible. */
+.ksegfill{background:var(--orange); box-shadow:0 0 0 2px rgba(230,57,70,.35);}
+.kmatatu{position:absolute; left:50%; width:68px; transform:translate(-50%,-50%);
+  z-index:6; filter:drop-shadow(0 4px 3px rgba(0,0,0,.32));}
+
+/* map footer: what the next level buys */
+.mapfoot{padding:8px 12px calc(10px + var(--safe-b)); display:flex; justify-content:center;}
+.footcard{background:var(--cream); border-radius:18px; padding:12px 16px; text-align:center;
+  width:min(420px,94vw); box-shadow:0 6px 0 rgba(0,0,0,.22);}
+.footline{font-weight:800; color:var(--blue); font-size:1rem;}
+.footsub{font-size:.75rem; font-weight:700; color:var(--ink-soft); margin:2px 0 8px;}
+
+/* ---- arrival ---- */
+.arrival{align-items:center; justify-content:center; padding:16px; overflow-y:auto;}
+.arrival.minor{background:linear-gradient(180deg,#ffe8bf,#f7b267);}
+.arrival.major{background:linear-gradient(180deg,#1D3557,#2b4a78);}
+.arrivecard{background:var(--cream); border-radius:26px; padding:22px 20px; text-align:center;
+  width:min(430px,93vw); box-shadow:0 10px 0 rgba(0,0,0,.28); margin:auto;}
+.arrival.major .arrivecard{border:5px solid var(--yellow);}
+.kikuu{display:inline-block; background:var(--red); color:#fff; font-weight:800; letter-spacing:2px;
+  font-size:.7rem; padding:4px 14px; border-radius:20px; margin-bottom:6px;}
+.arrivekicker{font-size:.8rem; font-weight:800; letter-spacing:2px; text-transform:uppercase;
+  color:var(--ink-soft);}
+.arrivename{margin:.05em 0 .15em; font-size:2.1rem; color:var(--red);
+  -webkit-text-stroke:1.5px var(--blue); text-shadow:3px 3px 0 rgba(0,0,0,.18); line-height:1.05;}
+.arrival.major .arrivename{font-size:2.5rem;}
+.arrivecard .arrive-matatu{width:min(250px,70vw); margin:6px auto;}
+
+.farestrip{display:inline-flex; align-items:center; gap:8px; background:var(--blue); color:#fff;
+  border-radius:14px; padding:8px 14px; font-weight:800; margin-top:6px; flex-wrap:wrap;
+  justify-content:center;}
+.fareleg{font-size:.95rem;}
+.faredot{opacity:.6;}
+.fareamt{display:inline-flex; align-items:center; gap:5px; color:var(--yellow); font-size:1.05rem;}
+.fareamt .c{width:15px; height:15px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #ffe08a, var(--yellow) 60%, var(--yellow-d));}
+.farenote{font-size:.72rem; font-weight:700; color:var(--ink-soft); margin-top:5px;}
+
+.blurb{font-size:.92rem; line-height:1.5; color:var(--ink); font-weight:600;
+  margin:14px 0 4px; text-align:left; border-left:4px solid var(--orange); padding-left:12px;}
+.arrival.major .blurb{font-size:.98rem;}
+.arrivecard .stat{display:flex; justify-content:space-around; margin:14px 0;}
+.arrivecard .stat div{font-weight:800; color:var(--blue); font-size:1.3rem;}
+.arrivecard .stat span{display:block; font-size:.68rem; color:var(--ink-soft); font-weight:700;}
+
+#finish .blurb{margin:12px 0;}
+
+/* ---- scoreboard ---- */
+.boardwrap{flex:1; overflow-y:auto; padding:8px 12px calc(20px + var(--safe-b));
+  max-width:560px; margin:0 auto; width:100%;}
+.btable{width:100%; border-collapse:collapse; background:rgba(255,255,255,.95);
+  border-radius:16px; overflow:hidden; box-shadow:0 6px 0 rgba(0,0,0,.2);}
+.btable th{background:var(--blue); color:#fff; font-size:.72rem; padding:8px 6px; text-align:left;}
+.btable td{padding:10px 6px; border-top:2px solid #efe6d4; vertical-align:middle;}
+.btable .num{text-align:center; font-weight:800; color:var(--blue);}
+.btable .rank{width:34px; text-align:center; font-weight:800; color:var(--red); font-size:1.1rem;}
+.bname{font-weight:800; font-size:.95rem;}
+.bmeta{font-size:.68rem; font-weight:700; color:var(--ink-soft);}
+.boardnote{font-size:.72rem; font-weight:600; color:var(--ink-soft); line-height:1.5;
+  background:rgba(255,255,255,.7); border-radius:12px; padding:10px 12px; margin-top:12px;}
+
+/* ---- traffic wall ---- */
+#traffic{align-items:center; justify-content:center; padding:0; overflow-y:auto;
+  background:linear-gradient(180deg,#8a8f98 0%, #6f747d 55%, #55595f 100%);}
+/* road-works hazard banding, top and bottom */
+.hazard{width:100%; height:18px; flex:none;
+  background:repeating-linear-gradient(45deg, var(--yellow) 0 14px, var(--ink) 14px 28px);}
+/* Height must clear the lowest car or the queue runs over the title below.
+   The matatu SVG renders 0.59x its own width tall, and each car is 62% of
+   this box, so a car is 0.62 * 0.59 = 0.37 of the box width, plus the 76px
+   stagger of the lowest one. */
+.jam{position:relative; width:min(340px,86vw); margin:14px auto 0;
+  height:calc(min(340px,86vw) * 0.37 + 80px); flex:none;}
+.jamcar{position:absolute; width:62%; filter:drop-shadow(0 5px 4px rgba(0,0,0,.4));}
+/* bumper to bumper, staggered so they read as a queue not a stack */
+.jamcar.a{left:0;    top:76px; z-index:3;}
+.jamcar.b{left:19%;  top:38px; z-index:2; opacity:.94;}
+.jamcar.c{left:38%;  top:0;    z-index:1; opacity:.88;}
+.traffictitle{margin:.15em 0 0; font-size:2.3rem; color:var(--yellow);
+  -webkit-text-stroke:2px var(--ink); text-shadow:3px 3px 0 rgba(0,0,0,.45); text-align:center;}
+.trafficsub{font-size:1rem; font-weight:800; letter-spacing:4px; text-transform:uppercase;
+  color:#fff; opacity:.85; margin-bottom:12px;}
+.trafficcard{background:var(--cream); border-radius:22px; padding:18px 18px 20px;
+  width:min(420px,92vw); text-align:center; box-shadow:0 8px 0 rgba(0,0,0,.35);
+  border:4px solid var(--ink); margin-bottom:18px;}
+.trafficcard .tbody{margin:0 0 8px; font-size:.95rem; font-weight:700; line-height:1.5;}
+.trafficcard .tbody.en{font-size:.82rem; font-weight:600; color:var(--ink-soft); font-style:italic;}
+.tstuck{display:inline-block; background:var(--red); color:#fff; font-weight:800;
+  border-radius:14px; padding:7px 14px; font-size:.88rem; margin:6px 0 10px;}
+.tnote{font-size:.74rem; font-weight:700; color:var(--ink-soft); line-height:1.5;
+  border-top:2px dashed #d8c7ab; padding-top:10px; margin-bottom:12px;}
+.footcard.jammed{background:#55595f; color:#fff; border:3px solid var(--yellow);}
+.footcard.jammed .footline{color:var(--yellow);}
+.footcard.jammed .footsub{color:#e8e2d6;}
+
+/* ---- debug (dev builds only) ---- */
+#debugFab{position:fixed; right:10px; bottom:calc(10px + var(--safe-b)); z-index:90;
+  width:42px; height:42px; border-radius:50%; background:var(--blue); color:#fff;
+  font-size:1.2rem; box-shadow:0 4px 0 rgba(0,0,0,.35); opacity:.85;}
+.dbginput{font-family:inherit; font-weight:800; font-size:.9rem; padding:6px 8px;
+  border-radius:10px; border:2px solid var(--blue); background:#fff; color:var(--ink); max-width:55%;}
 </style>
 
 <div id="app"></div>
@@ -264,6 +401,9 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 <div id="confetti"></div>
 
 <script src="puzzles.js"></script>
+<script src="economy.js"></script>
+<script src="route.js"></script>
+<script src="journey.js"></script>
 <script>
 "use strict";
 
@@ -289,13 +429,9 @@ const STRINGS = {
   vituo: "Vituo",
   safari: "Safari",
   kiwango: "Kiwango",
-  jaribuTena: "Jaribu tena",
   hongera: "Hongera",
   umefika: "Umefika",
   twende: "Twende!",
-  abiria: "Abiria",
-  dere: "Dere",
-  makanga: "Makanga",
   sauti: "Sauti",
   funga: "Funga",
   anzaUpya: "Anza upya",
@@ -303,9 +439,6 @@ const STRINGS = {
   ndio: "Ndio, anza upya",
   sitaki: "La, ghairi",
   manenoZiada: "Maneno ya Ziada",
-  ukoHapa: "Uko hapa",
-  imefungwa: "Imefungwa",
-  imekamilika: "Imekamilika",
   // wheel / gameplay
   kituoKijacho: "Kituo kijacho:",
   matatuTayari: "Matatu iko tayari kuondoka…",
@@ -323,28 +456,55 @@ const STRINGS = {
   praise: ["Safi!","Poa!","Vizuri!","Bomba!","Noma!","Freshi!","Hodari!","Umeweza!",
            "Safi kabisa!","Vizuri sana!","Mzuka!","Endelea hivyo!","Sawa sawa!","Umefanya vizuri!"],
   // level-complete celebration messages (use %K% for checkpoint)
-  complete: ["Umefika %K%! 🎉","Hongera! Umeshinda nauli!","Twende kituo kifuatacho!","Safari inaendelea!"],
   makangaShout: ["Beba beba!","Songa mbele!","Twende kazi!","Sonko, karibu!","Noma safari hii!"],
-  fareShout: "Umelipa nauli!",
   // intro / drive
   matatuInaendesha: (k) => `Matatu inaelekea ${k}…`,
   // map
   mapTitle: "Ramani ya Safari",
   // finish
-  finishTitle: "Umemaliza safari!",
-  finishSub: "Umefika Mombasa salama salmin!",
-  vituoVilivyokamilika: "Vituo",
   jumlaSarafu: "Sarafu",
-  manenoYaZiadaJumla: "Maneno ya ziada",
   shareBtn: "Shiriki safari",
   shareNakala: "Imenakiliwa! Bandika popote.",
-  shareText: (v, s, b) => `Nimemaliza Safari ya Matatu 🚐! Vituo: ${v}, Sarafu: ${s}, Maneno ya ziada: ${b}. Cheza pia:`,
+  shareText: (kituo, sarafu, vidokezo) => `Nimefika ${kituo} kwenye Safari ya Matatu 🚐! Sarafu: ${sarafu}, Vidokezo: ${vidokezo}. Cheza pia:`,
   chezaTena: "Cheza tena safari",
   // settings extras
   matatuYako: "Matatu yako:",
   toleo: "Toleo 1.0",
   // difficulty labels
   diff: {easy:"Rahisi", medium:"Wastani", hard:"Ngumu", expert:"Bingwa"},
+
+  // ---- journey layer ----
+  marudio: "Marudio",                       // replay
+  marudioNote: "Marudio — hakuna sarafu wala hatua.",
+  safariYangu: "Safari Yangu",
+  nauliImelipwa: "Nauli imelipwa",
+  sarafuZilizobaki: "Sarafu zilizobaki",
+  umewasili: "Umewasili",
+  kituoKikuu: "Kituo Kikuu",                // major stop
+  endeleaSafari: "Endelea na safari",
+  ngaziKadhaa: (n, k) => `Ngazi ${n} zaidi hadi ${k}`,
+  ngaziMojaHadi: (k) => `Ngazi 1 zaidi hadi ${k}`,
+  legOf: (a, b) => `${a} → ${b}`,
+  ngaziYa: (a, b) => `Ngazi ${a} / ${b}`,
+  // journey end
+  mwishoSub: "Umevuka kilomita 487 za barabara — mwisho wa safari.",
+  // traffic wall: the road continues but the word list has run out
+  trafficTitle: "MSONGAMANO!",
+  trafficSub: "Traffic!",
+  trafficBody: "Barabara imeziba kabisa. Malori yamesimama mstari mrefu na matatu haiwezi " +
+               "kusonga mbele kwa sasa.",
+  trafficBodyEn: "The road ahead is jammed — you can't travel further right now.",
+  trafficStuck: (a, b) => `Umekwama ${a}, ukielekea ${b}`,
+  trafficNote: "Umemaliza maneno yote yaliyopo. Maneno mapya yakiongezwa, safari itaendelea.",
+  jumlaUmbali: "Umbali",
+  jumlaNauli: "Nauli jumla",
+  jumlaNgazi: "Ngazi",
+  jumlaVidokezo: "Vidokezo",
+  // scoreboard
+  ubaoTitle: "Ubao wa Matokeo",
+  mbaliZaidi: "Umefika",
+  vidokezoVilivyotumika: "Vidokezo",
+  marudioJumla: "Marudio",
 };
 
 // Matatu slogans / names — one picked (and kept) per playthrough.
@@ -363,50 +523,39 @@ const MATATU_SKINS = [
 /* ======================================================================
    REWARDS / COSTS
    ====================================================================== */
+// Balance numbers all live in economy.js. CFG stays as the name the
+// gameplay code already uses, but it is now a view onto ECONOMY rather
+// than a second place to tune things.
 const CFG = {
-  startSarafu: 60,
-  hintCost: 25,
-  answerCoins: (tiles) => 5 + tiles * 3,   // 3-letter=14, 7-letter=26
-  bonusCoins:  (tiles) => 8 + tiles * 4,
+  hintCost: ECONOMY.HINT_COST,
+  answerCoins: ECONOMY.answerCoins,
+  bonusCoins: ECONOMY.bonusCoins,
 };
 
 /* ======================================================================
    PERSISTENCE
-   ====================================================================== */
-const SAVE_KEY = "safari_ya_matatu_v1";
-let state = loadState();
 
-function defaultState(){
-  return {
-    sarafu: CFG.startSarafu,
-    soundOn: true,
-    matatuName: MATATU_NAMES[Math.floor(Math.random()*MATATU_NAMES.length)],
-    skinIdx: Math.floor(Math.random()*MATATU_SKINS.length),
-    currentLevelId: 1,
-    levels: {}, // id -> {completed, foundAnswers:[], foundBonus:[]}
-  };
-}
-function loadState(){
-  try{
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(!raw) return defaultState();
-    const s = JSON.parse(raw);
-    // migrate / fill defaults
-    const d = defaultState();
-    return Object.assign(d, s, {levels: s.levels||{}});
-  }catch(e){ return defaultState(); }
-}
-function saveState(){
-  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
-}
+   The save itself lives in journey.js (IndexedDB, versioned, migrated).
+   `state` is kept as a thin view onto it so the gameplay code below can
+   go on reading `state.sarafu` / `state.levels` unchanged. Coins are
+   read-only through here — the ledger is the only way to move them.
+   ====================================================================== */
+const state = {
+  get sarafu(){ return coins(); },
+  get soundOn(){ return SAVE.profile.soundOn; },
+  set soundOn(v){ SAVE.profile.soundOn = v; persist(); },
+  get matatuName(){ return SAVE.profile.matatuName; },
+  set matatuName(v){ SAVE.profile.matatuName = v; persist(); },
+  get skinIdx(){ return SAVE.profile.skinIdx; },
+  set skinIdx(v){ SAVE.profile.skinIdx = v; persist(); },
+  get levels(){ return SAVE.levels; },
+  get currentLevelId(){ return SAVE.levelCursor; },
+  set currentLevelId(v){ SAVE.levelCursor = v; persist(); },
+};
+function saveState(){ persist(); }
 function levelRecord(id){
   if(!state.levels[id]) state.levels[id] = {completed:false, foundAnswers:[], foundBonus:[]};
   return state.levels[id];
-}
-function isUnlocked(id){
-  if(id===1) return true;
-  const prev = state.levels[id-1];
-  return !!(prev && prev.completed);
 }
 function skin(){ return MATATU_SKINS[state.skinIdx % MATATU_SKINS.length]; }
 
@@ -645,62 +794,136 @@ function renderHome(){
       <div class="sub">${STRINGS.tagline}</div>
       <div class="homebtns">
         <button class="btn red" id="playBtn">🚐 ${anyProgress ? STRINGS.endelea : STRINGS.anza}</button>
-        <button class="btn green" id="mapBtn">🗺️ ${STRINGS.ramani}</button>
+        <button class="btn green" id="boardBtn">🏆 ${STRINGS.ubaoTitle}</button>
         <button class="btn ghost" id="setBtn">⚙️ ${STRINGS.mipangilio}</button>
       </div>
       <div class="credit">${STRINGS.matatuYako} “${state.matatuName}” · ${STRINGS.toleo}</div>
     </div>`);
-  node.querySelector("#playBtn").onclick = ()=>{ actx(); startLevel(firstPlayableLevel()); };
-  node.querySelector("#mapBtn").onclick = ()=> renderMap();
+  // The route map is the hub — play always goes there first, so the player
+  // sees where the matatu is before boarding.
+  node.querySelector("#playBtn").onclick = ()=>{ actx(); renderMap(); };
+  node.querySelector("#boardBtn").onclick = ()=> renderScoreboard();
   node.querySelector("#setBtn").onclick = ()=> openSettings();
   show(node);
+  maybeMountDebug();
 }
 function firstPlayableLevel(){
-  for(const p of PUZZLES){ if(!(state.levels[p.levelId] && state.levels[p.levelId].completed)) return p.levelId; }
-  return PUZZLES[PUZZLES.length-1].levelId; // all done -> last
+  const next = nextUnplayedLevel();
+  return next !== null ? next : PUZZLES[PUZZLES.length-1].levelId; // all done -> last
 }
+
+// The next puzzle the player has never cleared, or null once the word list
+// is exhausted. The route is longer than the content: 21 legs need 42
+// levels and there are only 30 puzzles, so the journey stops at Bachuma
+// Gate until more words are added to the CSV.
+function nextUnplayedLevel(){
+  for(const p of PUZZLES){ if(!(state.levels[p.levelId] && state.levels[p.levelId].completed)) return p.levelId; }
+  return null;
+}
+function outOfWords(){ return nextUnplayedLevel() === null; }
 
 /* ======================================================================
    JOURNEY MAP
    ====================================================================== */
+// Label for the leg currently being travelled — used by the level HUD and
+// the map. At the end of the act there is no next stop.
+function legLabel(){
+  const from = currentStop(), to = nextStop();
+  if(!to) return {kicker: STRINGS.safari, title: from.name};
+  const done = SAVE.journey.levelsDoneThisLeg;
+  return {
+    kicker: STRINGS.ngaziYa(Math.min(done + 1, to.levelsToAdvance), to.levelsToAdvance),
+    title: STRINGS.legOf(from.name, to.name),
+  };
+}
+
+// The route map. This is the hub: a vertical stretch of the A109 with the
+// matatu sitting at a fractional position along the leg it is driving, so
+// "one of two levels done" is visible without opening anything.
 function renderMap(){
   const node = el(`
     <div class="screen" id="map">
       <div class="maphead">
         <button class="icon-btn" id="mHome">🏠</button>
         <h2>${STRINGS.mapTitle}</h2>
-        <div class="coins"><span class="c"></span><span>${state.sarafu}</span></div>
+        <div class="coins" id="coinBox"><span class="c"></span><span id="coinNum">${coins()}</span></div>
       </div>
       <div class="maproad"><div class="route" id="route"></div></div>
+      <div class="mapfoot" id="mapFoot"></div>
     </div>`);
   node.querySelector("#mHome").onclick = renderHome;
   const route = node.querySelector("#route");
-  const currentId = firstPlayableLevel();
-  PUZZLES.forEach((p, idx)=>{
-    const rec = state.levels[p.levelId] || {};
-    const done = rec.completed;
-    const current = p.levelId === currentId;
-    const locked = !isUnlocked(p.levelId) && !done;
-    const side = idx % 2 === 0 ? "left" : "right";
-    const status = done ? "done" : current ? "current" : locked ? "locked" : "";
-    const stop = el(`
-      <div class="stop ${side} ${status} ${(!locked)?'playable':''}" data-id="${p.levelId}">
-        ${current ? `<div class="matatu-mini">${matatuSVG(state.matatuName,null,{people:false})}</div>`:``}
-        <div class="medal">${done ? "✓" : locked ? "🔒" : p.levelId}</div>
-        <div class="label">
-          ${p.checkpoint}
-          <span class="tag">${done ? STRINGS.imekamilika : current ? STRINGS.ukoHapa : locked ? STRINGS.imefungwa : STRINGS.kituo}</span>
+  const here = SAVE.journey.stopIndex;
+
+  STOPS.forEach((s, i)=>{
+    const done    = i <= here;
+    const current = i === here;
+    const status  = current ? "current" : done ? "done" : "locked";
+
+    route.appendChild(el(`
+      <div class="kstop ${status} ${s.tier} ${i % 2 === 0 ? "left" : "right"}" data-id="${s.id}">
+        <!-- The matatu itself is drawn on the road segment below, so an
+             arrived stop just gets a tick — no second vehicle. -->
+        <div class="kmarker">${done ? "✓" : ""}</div>
+        <div class="klabel">
+          <div class="kname">${s.name}</div>
+          <div class="kmeta">${s.kmFromNairobi} km${
+            i > 0 ? ` · ${STRINGS.nauli} ${s.fareFromPrevious}` : ""
+          }</div>
         </div>
+      </div>`));
+
+    // Road segment between this stop and the next, carrying the matatu
+    // when it is the leg in progress.
+    const next = STOPS[i+1];
+    if(!next) return;
+    const travelling = i === here;
+    const pct = travelling ? Math.round(legProgress() * 100) : 0;
+    const seg = el(`
+      <div class="kseg ${i < here ? "done" : ""} ${travelling ? "active" : ""}">
+        <div class="ksegline"></div>
+        ${travelling ? `
+          <div class="ksegfill" style="height:${pct}%"></div>
+          <div class="kmatatu" style="top:${pct}%">
+            ${matatuSVG(state.matatuName, null, {people:false})}
+          </div>` : ``}
       </div>`);
-    if(!locked){
-      stop.onclick = ()=>{ actx(); startLevel(p.levelId); };
-    }
-    route.appendChild(stop);
+    route.appendChild(seg);
   });
+
+  // Footer: what the next level buys you, or the end-of-act button.
+  const foot = node.querySelector("#mapFoot");
+  const to = nextStop();
+  if(to && outOfWords()){
+    // Road ahead, but no words left to earn the fare with.
+    foot.appendChild(el(`
+      <div class="footcard jammed">
+        <div class="footline">🚧 ${STRINGS.trafficTitle}</div>
+        <div class="footsub">${STRINGS.trafficStuck(currentStop().name, to.name)}</div>
+        <button class="btn ghost" id="goTraffic">${STRINGS.trafficSub}</button>
+      </div>`));
+    foot.querySelector("#goTraffic").onclick = ()=> renderTraffic();
+  } else if(to){
+    const left = levelsRemainingThisLeg();
+    foot.appendChild(el(`
+      <div class="footcard">
+        <div class="footline">${left === 1 ? STRINGS.ngaziMojaHadi(to.name) : STRINGS.ngaziKadhaa(left, to.name)}</div>
+        <div class="footsub">${STRINGS.nauli} ${to.fareFromPrevious} · ${legDistanceKm(SAVE.journey.stopIndex+1)} km</div>
+        <button class="btn red" id="goLevel">🚐 ${STRINGS.twende}</button>
+      </div>`));
+    foot.querySelector("#goLevel").onclick = ()=>{ actx(); startLevel(firstPlayableLevel()); };
+  } else {
+    foot.appendChild(el(`
+      <div class="footcard">
+        <div class="footline">${STRINGS.mwishoSub}</div>
+        <button class="btn green" id="goEnd">🏁 ${STRINGS.safariYangu}</button>
+      </div>`));
+    foot.querySelector("#goEnd").onclick = ()=> renderJourneyEnd();
+  }
+
   show(node);
-  // scroll current stop into view
   requestAnimationFrame(()=>{
-    const cur = route.querySelector(".stop.current") || route.querySelector(".stop.playable");
+    const cur = route.querySelector(".kstop.current");
     if(cur) cur.scrollIntoView({block:"center"});
   });
 }
@@ -713,8 +936,9 @@ function startLevel(levelId){
   const node = el(`
     <div class="screen" id="intro">
       <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · <span class="pill ${puzzle.difficulty}">${STRINGS.diff[puzzle.difficulty]||puzzle.difficulty}</span></div>
-      <div class="kicker">${STRINGS.kituoKijacho}</div>
-      <h2>${puzzle.checkpoint}</h2>
+      <div class="kicker">${nextStop() ? STRINGS.kituoKijacho : STRINGS.safari}</div>
+      <h2>${nextStop() ? nextStop().name : currentStop().name}</h2>
+      <div class="kicker">${legLabel().kicker}</div>
       <div class="intro-matatu">${matatuSVG(state.matatuName)}</div>
       <div class="depart">${STRINGS.matatuTayari}</div>
       <button class="btn red" id="go">${STRINGS.twende}</button>
@@ -746,16 +970,19 @@ function renderGame(puzzle){
     moved: false,
     foundAnswers: new Set(rec.foundAnswers || []),
     foundBonus: new Set(rec.foundBonus || []),
+    // A level already cleared pays nothing and does not move the matatu.
+    isReplay: !!rec.completed,
   };
 
   const totalBonus = puzzle.bonusWords.length;
+  const leg = legLabel();
   const node = el(`
     <div class="screen" id="game">
       <div class="hud">
         <button class="icon-btn" id="gMap">🗺️</button>
         <div class="center">
-          <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · ${STRINGS.kituo}</div>
-          <div class="checkpoint">${puzzle.checkpoint}</div>
+          <div class="kicker">${G.isReplay ? STRINGS.marudio : leg.kicker}</div>
+          <div class="checkpoint">${leg.title}</div>
         </div>
         <div class="coins" id="coinBox"><span class="c"></span><span id="coinNum">${state.sarafu}</span></div>
       </div>
@@ -1049,33 +1276,42 @@ function acceptAnswer(word){
   G.foundAnswers.add(word);
   const pl = G.grid.placements.find(p=> p.word === word && !p.found) || G.grid.placements.find(p=>p.word===word);
   if(pl) pl.found = true;
-  const coins = CFG.answerCoins(pl ? pl.tiles.length : word.length);
+  const reward = CFG.answerCoins(pl ? pl.tiles.length : word.length);
   SFX.correct();
   toast(praise(), "");
   flyAndFill(pl, word);
-  awardCoins(coins);
+  awardCoins(reward, "level_reward", {levelId: G.puzzle.levelId, word});
   persistFound();
   clearSelection();
 }
 function acceptBonus(word){
   G.foundBonus.add(word);
-  const coins = CFG.bonusCoins(splitTiles(word, G.puzzle.letters).length);
+  const reward = CFG.bonusCoins(splitTiles(word, G.puzzle.letters).length);
   SFX.bonus();
-  toast(STRINGS.neno_la_ziada(coins), "bonus");
-  awardCoins(coins);
+  toast(STRINGS.neno_la_ziada(reward), "bonus");
+  awardCoins(reward, "bonus", {levelId: G.puzzle.levelId, word});
   updateBonusCount();
   persistFound();
   clearSelection();
 }
 
-function awardCoins(n){
-  state.sarafu += n;
+// Every coin the player gains goes through the ledger. `reason` is the
+// ledger reason, so a later screen can break earnings down by source.
+function awardCoins(n, reason, meta){
+  // Replaying a cleared level pays nothing — otherwise the cheapest level
+  // in the act is an unlimited coin faucet. See ECONOMY.REPLAY_PAYS_COINS.
+  if(G && G.isReplay && !ECONOMY.REPLAY_PAYS_COINS) return;
+  postLedger(n, reason || "level_reward", meta);
+  refreshCoinHud(true);
+  SFX.coin();
+}
+
+// Repaints any visible coin counter from the ledger balance.
+function refreshCoinHud(pop){
   const box = document.getElementById("coinBox");
   const num = document.getElementById("coinNum");
-  if(num) num.textContent = state.sarafu;
-  if(box){ box.classList.remove("coin-pop"); void box.offsetWidth; box.classList.add("coin-pop"); }
-  SFX.coin();
-  saveState();
+  if(num) num.textContent = coins();
+  if(pop && box){ box.classList.remove("coin-pop"); void box.offsetWidth; box.classList.add("coin-pop"); }
 }
 
 function updateBonusCount(){
@@ -1143,12 +1379,13 @@ function flyAndFill(pl, word){
 
 /* ---- hint ---- */
 function useHint(){
-  if(state.sarafu < CFG.hintCost){ toast(STRINGS.hakunaSarafu, "nudge"); SFX.error(); return; }
+  if(!canAfford(CFG.hintCost)){ toast(STRINGS.hakunaSarafu, "nudge"); SFX.error(); return; }
   // pick a random empty cell
   const empties = [...G.grid.cells.values()].filter(c=> !c.filled);
   if(!empties.length){ toast(STRINGS.hakunaKuonyesha, "nudge"); return; }
-  state.sarafu -= CFG.hintCost;
-  const num = document.getElementById("coinNum"); if(num) num.textContent = state.sarafu;
+  postLedger(-CFG.hintCost, "hint", {levelId: G.puzzle.levelId});
+  noteHintUsed();
+  refreshCoinHud(false);
   const cell = empties[Math.floor(Math.random()*empties.length)];
   cell.filled = true; cell.hinted = true;
   const ce = G.cellEls.get(cell.r+","+cell.c);
@@ -1192,96 +1429,212 @@ function checkComplete(){
   rec.completed = true;
   persistFound();
   state.currentLevelId = Math.min(G.puzzle.levelId + 1, PUZZLES.length);
+
+  // Only a first clear pays out and moves the matatu. A replay is recorded
+  // (it is a scoreboard tiebreak) but changes nothing else.
+  let departure = null;
+  if(firstTime){
+    // firstTime implies G.isReplay was false, so awardCoins will pay out.
+    awardCoins(ECONOMY.LEVEL_COMPLETION_BONUS, "level_reward",
+               {levelId: G.puzzle.levelId, completion: true});
+    const {readyToDepart} = creditLevelToLeg();
+    // The fare comes off here, on departure — not when the level ended.
+    if(readyToDepart) departure = departToNextStop();
+  } else {
+    noteReplay();
+  }
   saveState();
-  setTimeout(()=> celebrate(G.puzzle, firstTime), 400);
+
+  setTimeout(()=>{
+    if(departure) renderArrival(departure);
+    else celebrate(G.puzzle, firstTime);
+  }, 400);
 }
 
 /* ======================================================================
-   CELEBRATION (level complete)
+   LEVEL COMPLETE, MID-LEG
+
+   The matatu has not arrived anywhere yet — it has moved along the road.
+   Deliberately lighter than an arrival so that arriving keeps its weight.
    ====================================================================== */
 function celebrate(puzzle, firstTime){
   window.removeEventListener("resize", onResize);
   document.onkeydown = null;
-  SFX.hoot();
-  launchConfetti();
-  const isLast = puzzle.levelId >= PUZZLES.length;
-  const msg = pick(STRINGS.complete).replace("%K%", puzzle.checkpoint);
-  const shout = pick(STRINGS.makangaShout);
+  SFX.correct();
+  const to = nextStop();
+  const left = levelsRemainingThisLeg();
   const bonusFound = (state.levels[puzzle.levelId].foundBonus || []).length;
   const node = el(`
     <div class="screen" id="celebrate">
       <div class="celebrate-card">
         <div class="arrive-matatu">${matatuSVG(state.matatuName)}</div>
-        <h2>${msg}</h2>
-        <div class="shout">🗣️ ${shout}</div>
-        <div class="depart" style="color:var(--green-d);font-weight:800">${STRINGS.fareShout}</div>
+        <h2>${pick(STRINGS.praise)}</h2>
+        <div class="shout">🗣️ ${pick(STRINGS.makangaShout)}</div>
+        ${!firstTime ? `<div class="depart">${STRINGS.marudioNote}</div>` : ``}
+        ${to ? `<div class="depart" style="color:var(--green-d);font-weight:800">
+            ${left === 1 ? STRINGS.ngaziMojaHadi(to.name) : STRINGS.ngaziKadhaa(left, to.name)}
+          </div>` : ``}
         <div class="stat">
-          <div>${state.sarafu}<span>${STRINGS.jumlaSarafu}</span></div>
+          <div>${coins()}<span>${STRINGS.jumlaSarafu}</span></div>
           <div>${bonusFound}/${puzzle.bonusWords.length}<span>${STRINGS.manenoZiada}</span></div>
-          <div>${puzzle.levelId}/${PUZZLES.length}<span>${STRINGS.vituo}</span></div>
+          <div>${currentStop().kmFromNairobi}<span>km</span></div>
         </div>
-        <button class="btn red" id="next">${isLast ? "🏁 "+STRINGS.umefika : "🚐 "+STRINGS.kifuatacho}</button>
+        <button class="btn red" id="next">🚐 ${STRINGS.kifuatacho}</button>
+        <div style="margin-top:10px"><button class="btn ghost sm" id="cMap">${STRINGS.ramaniShort}</button></div>
       </div>
     </div>`);
-  node.querySelector("#next").onclick = ()=>{
-    if(isLast){ renderFinish(); }
-    else { driveTo(puzzle.levelId + 1); }
-  };
+  node.querySelector("#next").onclick = ()=> driveToNextLevel();
+  node.querySelector("#cMap").onclick = renderMap;
   show(node);
 }
 
-/* driving transition to next kituo */
-function driveTo(nextId){
-  const next = PUZZLES.find(p=>p.levelId===nextId);
+/* ======================================================================
+   TRAFFIC — the road goes on, the words don't.
+
+   Shown when every puzzle has been cleared but the route still has stops
+   ahead. A hard stop, not a "coming soon" teaser: the matatu is stuck in a
+   jam, which is the most Mombasa-Road way for a journey to pause.
+   ====================================================================== */
+function renderTraffic(){
+  window.removeEventListener("resize", onResize);
+  document.onkeydown = null;
+  const from = currentStop(), to = nextStop();
+  const node = el(`
+    <div class="screen" id="traffic">
+      <div class="hazard"></div>
+      <div class="jam">
+        <div class="jamcar a">${matatuSVG(state.matatuName, null, {people:false})}</div>
+        <div class="jamcar b">${matatuSVG("Subira", MATATU_SKINS[1], {people:false})}</div>
+        <div class="jamcar c">${matatuSVG("Baraka", MATATU_SKINS[3], {people:false})}</div>
+      </div>
+      <h1 class="traffictitle">${STRINGS.trafficTitle}</h1>
+      <div class="trafficsub">${STRINGS.trafficSub}</div>
+      <div class="trafficcard">
+        <p class="tbody">${STRINGS.trafficBody}</p>
+        <p class="tbody en">${STRINGS.trafficBodyEn}</p>
+        ${to ? `<div class="tstuck">${STRINGS.trafficStuck(from.name, to.name)}</div>` : ``}
+        <div class="tnote">${STRINGS.trafficNote}</div>
+        <button class="btn ghost sm" id="tMap">${STRINGS.ramaniShort}</button>
+      </div>
+      <div class="hazard"></div>
+    </div>`);
+  node.querySelector("#tMap").onclick = renderMap;
+  show(node);
+}
+
+/* Driving transition, then straight into the next level. */
+function driveToNextLevel(){
+  // Out of puzzles — the matatu drives into the jam instead.
+  if(outOfWords()){ renderTraffic(); return; }
+  const to = nextStop();
   const overlay = el(`
     <div id="drive">
-      <div class="drivelabel">${STRINGS.matatuInaendesha(next ? next.checkpoint : "")}</div>
+      <div class="drivelabel">${STRINGS.matatuInaendesha(to ? to.name : "")}</div>
       <div class="drive-matatu">${matatuSVG(state.matatuName)}</div>
       <div class="road"></div>
     </div>`);
   document.body.appendChild(overlay);
-  const car = overlay.querySelector(".drive-matatu");
-  // slide across then settle
-  car.animate([
+  overlay.querySelector(".drive-matatu").animate([
     {transform:"translateX(-120vw)"},
     {transform:"translateX(0)"},
   ], {duration:1400, easing:"cubic-bezier(.3,.7,.4,1)", fill:"forwards"});
-  setTimeout(()=>{ overlay.remove(); startLevel(nextId); }, 1550);
+  setTimeout(()=>{ overlay.remove(); startLevel(firstPlayableLevel()); }, 1550);
 }
 
 /* ======================================================================
-   ROUTE COMPLETE
+   ARRIVAL — the reward moment.
+
+   `receipt` comes from departToNextStop(): the fare has already been
+   deducted by the time this renders, so it reports rather than decides.
+   Major stops get the long version.
    ====================================================================== */
-function renderFinish(){
-  const cleared = PUZZLES.filter(p=> state.levels[p.levelId] && state.levels[p.levelId].completed).length;
-  let bonusTotal = 0;
-  for(const p of PUZZLES){ const r=state.levels[p.levelId]; if(r&&r.foundBonus) bonusTotal += r.foundBonus.length; }
+function renderArrival(receipt){
+  window.removeEventListener("resize", onResize);
+  document.onkeydown = null;
+  SFX.hoot();
+  launchConfetti();
+  if(receipt.isMajor) setTimeout(launchConfetti, 500);
+
+  const {from, to, farePaid, coinsRemaining, legKm, isMajor, isFinal} = receipt;
+
   const node = el(`
-    <div class="screen" id="finish">
-      <h1>🎉 ${STRINGS.finishTitle}</h1>
-      <div class="arrive-matatu" style="width:min(320px,82vw)">${matatuSVG(state.matatuName)}</div>
-      <div class="fcard">
-        <div style="font-weight:800;color:var(--green-d)">${STRINGS.finishSub}</div>
-        <div class="stat">
-          <div>${cleared}/${PUZZLES.length}<span>${STRINGS.vituoVilivyokamilika}</span></div>
-          <div>${state.sarafu}<span>${STRINGS.jumlaSarafu}</span></div>
-          <div>${bonusTotal}<span>${STRINGS.manenoYaZiadaJumla}</span></div>
+    <div class="screen arrival ${isMajor ? "major" : "minor"}" id="arrival">
+      <div class="arrivecard">
+        ${isMajor ? `<div class="kikuu">★ ${STRINGS.kituoKikuu} ★</div>` : ``}
+        <div class="arrivekicker">${STRINGS.umewasili}</div>
+        <h1 class="arrivename">${to.name}</h1>
+        <div class="arrive-matatu">${matatuSVG(state.matatuName)}</div>
+
+        <div class="farestrip">
+          <span class="fareleg">${STRINGS.legOf(from.name, to.name)}</span>
+          <span class="faredot">·</span>
+          <span class="fareamt"><span class="c"></span>${farePaid}</span>
         </div>
-        <button class="btn green" id="share">🔗 ${STRINGS.shareBtn}</button>
-        <div style="margin-top:12px"><button class="btn ghost sm" id="fMap">${STRINGS.ramaniShort}</button>
-        <button class="btn ghost sm" id="fReset">${STRINGS.chezaTena}</button></div>
+        <div class="farenote">${STRINGS.nauliImelipwa} · ${legKm} km</div>
+
+        <p class="blurb">${to.blurb}</p>
+
+        <div class="stat">
+          <div>${coinsRemaining}<span>${STRINGS.sarafuZilizobaki}</span></div>
+          <div>${to.kmFromNairobi}<span>km</span></div>
+          <div>${SAVE.journey.stopIndex}/${STOPS.length-1}<span>${STRINGS.vituo}</span></div>
+        </div>
+
+        <button class="btn red" id="onward">
+          ${isFinal ? "🏁 " + STRINGS.umefika : "🚐 " + STRINGS.endeleaSafari}
+        </button>
+        <div style="margin-top:10px"><button class="btn ghost sm" id="aMap">${STRINGS.ramaniShort}</button></div>
       </div>
     </div>`);
-  node.querySelector("#share").onclick = ()=> shareSafari(cleared, bonusTotal);
+
+  node.querySelector("#onward").onclick = ()=>{
+    if(isFinal) renderJourneyEnd();
+    else renderMap();
+  };
+  node.querySelector("#aMap").onclick = renderMap;
+  show(node);
+}
+
+/* ======================================================================
+   JOURNEY END — act one complete at Mtito Andei.
+   ====================================================================== */
+function renderJourneyEnd(){
+  const s = scoreEntry();
+  const node = el(`
+    <div class="screen" id="finish">
+      <h1>🏁 ${STOPS[STOPS.length-1].name}!</h1>
+      <div class="arrive-matatu" style="width:min(320px,82vw)">${matatuSVG(state.matatuName)}</div>
+      <div class="fcard">
+        <div style="font-weight:800;color:var(--green-d)">${STRINGS.mwishoSub}</div>
+        <div class="stat">
+          <div>${s.kmReached}<span>${STRINGS.jumlaUmbali} (km)</span></div>
+          <div>${s.farePaid}<span>${STRINGS.jumlaNauli}</span></div>
+          <div>${s.coinsRemaining}<span>${STRINGS.jumlaSarafu}</span></div>
+        </div>
+        <div class="stat">
+          <div>${s.levelsPlayed}<span>${STRINGS.jumlaNgazi}</span></div>
+          <div>${s.hintsUsed}<span>${STRINGS.jumlaVidokezo}</span></div>
+          <div>${s.levelsReplayed}<span>${STRINGS.marudioJumla}</span></div>
+        </div>
+        <p class="blurb">${STOPS[STOPS.length-1].blurb}</p>
+        <button class="btn green" id="share">🔗 ${STRINGS.shareBtn}</button>
+        <div style="margin-top:12px">
+          <button class="btn ghost sm" id="fMap">${STRINGS.ramaniShort}</button>
+          <button class="btn ghost sm" id="fReset">${STRINGS.chezaTena}</button>
+        </div>
+      </div>
+    </div>`);
+  node.querySelector("#share").onclick = ()=> shareSafari(s);
   node.querySelector("#fMap").onclick = renderMap;
   node.querySelector("#fReset").onclick = ()=> confirmReset();
   launchConfetti();
   SFX.hoot();
   show(node);
 }
-function shareSafari(cleared, bonusTotal){
+
+function shareSafari(s){
   const url = location.href.split("#")[0];
-  const text = STRINGS.shareText(`${cleared}/${PUZZLES.length}`, state.sarafu, bonusTotal) + " " + url;
+  const text = STRINGS.shareText(s.furthestStopName, s.coinsRemaining, s.hintsUsed) + " " + url;
   const done = ()=> toast(STRINGS.shareNakala, "");
   if(navigator.share){
     navigator.share({title:STRINGS.gameTitle, text, url}).catch(()=>{ copyText(text, done); });
@@ -1361,18 +1714,146 @@ function confirmReset(){
       <button class="btn red" id="doReset">${STRINGS.ndio}</button>
     </div>
   `);
-  ov.querySelector("#doReset").onclick = ()=>{
-    localStorage.removeItem(SAVE_KEY);
-    state = defaultState(); saveState();
+  ov.querySelector("#doReset").onclick = async ()=>{
+    await resetJourney();
+    paintMatatu();
     ov.remove(); renderHome();
   };
 }
 
 /* ======================================================================
-   BOOT
+   SCOREBOARD
+
+   Local and single-player, but built on rankScores() so that adding remote
+   entries later is a matter of concatenating them into the array.
    ====================================================================== */
-saveState();   // lock in the randomly-painted matatu name/skin on first visit
-renderHome();
+function renderScoreboard(){
+  const board = rankScores([scoreEntry()]);
+  const rows = board.map((s, i)=> `
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td>
+        <div class="bname">${s.furthestStopName}</div>
+        <div class="bmeta">${s.kmReached} km · ${s.levelsPlayed} ${STRINGS.jumlaNgazi.toLowerCase()}</div>
+      </td>
+      <td class="num">${s.hintsUsed}</td>
+      <td class="num">${s.coinsRemaining}</td>
+      <td class="num">${s.levelsReplayed}</td>
+    </tr>`).join("");
+
+  const node = el(`
+    <div class="screen" id="board">
+      <div class="maphead">
+        <button class="icon-btn" id="bHome">🏠</button>
+        <h2>${STRINGS.ubaoTitle}</h2>
+        <div class="coins"><span class="c"></span><span>${coins()}</span></div>
+      </div>
+      <div class="boardwrap">
+        <table class="btable">
+          <thead><tr>
+            <th></th><th>${STRINGS.mbaliZaidi}</th>
+            <th class="num">💡</th><th class="num">🪙</th><th class="num">↺</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p class="boardnote">
+          Nafasi hupangwa kwa kituo cha mbali zaidi, kisha vidokezo vichache,
+          kisha sarafu zilizobaki, kisha marudio machache.
+        </p>
+      </div>
+    </div>`);
+  node.querySelector("#bHome").onclick = renderHome;
+  show(node);
+}
+
+/* ======================================================================
+   DEBUG PANEL — dev builds only.
+
+   "Dev build" here means served from localhost / a file:// open, or
+   explicitly switched on with ?debug=1. A production install from a real
+   origin never mounts it.
+   ====================================================================== */
+function isDebugBuild(){
+  if(location.search.includes("debug=1")) return true;
+  const h = location.hostname;
+  return h === "localhost" || h === "127.0.0.1" || h === "" || h.endsWith(".local");
+}
+
+function maybeMountDebug(){
+  if(!isDebugBuild()) return;
+  if(document.getElementById("debugFab")) return;
+  const fab = el(`<button id="debugFab" title="Debug">🐞</button>`);
+  fab.onclick = openDebugPanel;
+  document.body.appendChild(fab);
+}
+
+function openDebugPanel(){
+  const opts = STOPS.map((s,i)=>
+    `<option value="${i}" ${i===SAVE.journey.stopIndex?"selected":""}>${i}. ${s.name}</option>`
+  ).join("");
+  const bal = DEBUG_API.verifyBalance();
+  const ov = openModal(`
+    <h2>🐞 Debug</h2>
+    <div class="row"><span>Kituo</span>
+      <select id="dbgStop" class="dbginput">${opts}</select></div>
+    <div class="row"><span>Levels this leg</span>
+      <strong>${SAVE.journey.levelsDoneThisLeg} / ${nextStop() ? nextStop().levelsToAdvance : "—"}</strong></div>
+    <div class="row"><span>Sarafu</span>
+      <input id="dbgCoins" class="dbginput" type="number" value="${coins()}"></div>
+    <div class="row"><span>Ledger</span>
+      <strong>${SAVE.ledger.length} entries</strong></div>
+    <div class="row"><span>Balance check</span>
+      <strong style="color:${bal.ok?'var(--green-d)':'var(--red)'}">
+        ${bal.ok ? "✓ ledger = " + bal.derived : "✗ cache " + bal.cached + " vs " + bal.derived}
+      </strong></div>
+    <div class="row"><span>Save version</span><strong>v${SAVE.version}</strong></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px">
+      <button class="btn sm" id="dbgApply">Apply</button>
+      <button class="btn ghost sm" id="dbgDump">Dump</button>
+      <button class="btn red sm" id="dbgReset">Reset save</button>
+      <button class="btn ghost sm" data-close>${STRINGS.funga}</button>
+    </div>
+  `);
+  ov.querySelector("#dbgApply").onclick = ()=>{
+    DEBUG_API.jumpToStop(Number(ov.querySelector("#dbgStop").value));
+    DEBUG_API.setBalance(Number(ov.querySelector("#dbgCoins").value));
+    ov.remove(); renderMap();
+  };
+  ov.querySelector("#dbgDump").onclick = ()=>{ console.log(DEBUG_API.dump()); toast("Dumped to console",""); };
+  ov.querySelector("#dbgReset").onclick = async ()=>{
+    await resetJourney(); paintMatatu(); ov.remove(); renderHome();
+  };
+}
+
+/* ======================================================================
+   BOOT
+
+   The save now lives in IndexedDB, so boot is async. Everything after
+   loadJourney() runs against an in-memory save and writes behind, which
+   keeps all the gameplay code synchronous.
+   ====================================================================== */
+
+// The matatu's name and paint are chosen once, on the first ever boot.
+function paintMatatu(){
+  if(!SAVE.profile.matatuName){
+    SAVE.profile.matatuName = MATATU_NAMES[Math.floor(Math.random()*MATATU_NAMES.length)];
+    SAVE.profile.skinIdx = Math.floor(Math.random()*MATATU_SKINS.length);
+    persist();
+  }
+}
+
+async function boot(){
+  try{
+    await loadJourney();
+  }catch(e){
+    // Storage is unavailable (private mode, quota, blocked). Play on with
+    // an in-memory save rather than showing the player an error.
+    console.warn("save unavailable, playing unsaved", e);
+  }
+  paintMatatu();
+  renderHome();
+}
+boot();
 
 // register service worker (ignored on file://, that's fine — game still works)
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
