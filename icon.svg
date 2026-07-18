@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#FFB703"/>
+  <rect width="512" height="512" rx="96" fill="url(#sky)" opacity="0.35"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7cc5ff"/><stop offset="1" stop-color="#ffd79a"/>
+    </linearGradient>
+  </defs>
+  <!-- road -->
+  <rect x="0" y="392" width="512" height="120" fill="#3a3a44"/>
+  <rect x="0" y="446" width="512" height="12" fill="#FFB703"
+        stroke-dasharray="40 30"/>
+  <g stroke="#FFD23F" stroke-width="12" stroke-dasharray="40 32">
+    <line x1="0" y1="452" x2="512" y2="452"/>
+  </g>
+  <!-- matatu -->
+  <g transform="translate(56 150)">
+    <rect x="6" y="30" width="392" height="150" rx="30" fill="#E63946" stroke="#1D3557" stroke-width="8"/>
+    <rect x="90" y="8" width="230" height="26" rx="10" fill="#1D3557"/>
+    <rect x="6" y="96" width="392" height="26" fill="#FFB703"/>
+    <g fill="#cdeafe" stroke="#1D3557" stroke-width="6">
+      <rect x="34" y="48" width="66" height="40" rx="7"/>
+      <rect x="116" y="48" width="66" height="40" rx="7"/>
+      <rect x="198" y="48" width="66" height="40" rx="7"/>
+      <rect x="280" y="48" width="66" height="40" rx="7"/>
+    </g>
+    <rect x="70" y="132" width="260" height="30" rx="15" fill="#fff"/>
+    <text x="200" y="154" text-anchor="middle" font-family="Trebuchet MS, sans-serif"
+          font-size="24" font-weight="800" fill="#E63946">SAFARI</text>
+    <circle cx="110" cy="190" r="30" fill="#222"/><circle cx="110" cy="190" r="12" fill="#bbb"/>
+    <circle cx="300" cy="190" r="30" fill="#222"/><circle cx="300" cy="190" r="12" fill="#bbb"/>
+  </g>
+</svg>

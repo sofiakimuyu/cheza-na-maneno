@@ -1,0 +1,1381 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#E63946" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Safari ya Matatu" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<title>Safari ya Matatu</title>
+
+<style>
+/* ============================ THEME / PALETTE ============================ */
+:root{
+  --red:#E63946; --red-d:#c62f3c;
+  --yellow:#FFB703; --yellow-d:#e5a300;
+  --green:#2A9D8F; --green-d:#218276;
+  --blue:#1D3557; --blue-2:#2b4a78;
+  --orange:#F4802B; --orange-d:#e06a15;
+  --cream:#FFF6E9; --cream-2:#ffeccf;
+  --ink:#241a12; --ink-soft:#5c4a38;
+  --road:#3a3a44; --road-line:#ffd23f;
+  --tile:#fff; --tile-sh:#c9b79a;
+  --ok:#2A9D8F; --shadow:0 6px 0 rgba(0,0,0,.18);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; height:100%;}
+body{
+  font-family:"Baloo 2", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(120% 80% at 50% -10%, #7cc5ff 0%, #a8dcff 30%, transparent 60%),
+    linear-gradient(180deg,#ffe8bf 0%, #ffd79a 42%, #f7b267 100%);
+  background-attachment:fixed;
+  overflow:hidden;
+  user-select:none; -webkit-user-select:none;
+  touch-action:manipulation;
+}
+button{font-family:inherit; cursor:pointer; border:none; color:inherit;}
+.hidden{display:none !important;}
+
+/* Bold "hand-painted poster" heading font stack fallback */
+h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
+
+/* ============================ APP SHELL ============================ */
+#app{position:fixed; inset:0; display:flex; flex-direction:column; overflow:hidden;}
+.screen{position:absolute; inset:0; display:flex; flex-direction:column;
+  animation:fadeIn .25s ease; overflow:hidden;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+
+/* chunky buttons */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5em;
+  background:var(--yellow); color:var(--ink);
+  border-radius:16px; padding:14px 22px; font-size:1.15rem; font-weight:800;
+  box-shadow:0 5px 0 var(--yellow-d); transition:transform .05s, box-shadow .05s;
+}
+.btn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--yellow-d);}
+.btn.red{background:var(--red); color:#fff; box-shadow:0 5px 0 var(--red-d);}
+.btn.red:active{box-shadow:0 1px 0 var(--red-d);}
+.btn.green{background:var(--green); color:#fff; box-shadow:0 5px 0 var(--green-d);}
+.btn.green:active{box-shadow:0 1px 0 var(--green-d);}
+.btn.blue{background:var(--blue); color:#fff; box-shadow:0 5px 0 #12203a;}
+.btn.ghost{background:rgba(255,255,255,.7); box-shadow:0 5px 0 rgba(0,0,0,.12);}
+.btn.sm{padding:9px 14px; font-size:.95rem; border-radius:12px;}
+
+/* ============================ HOME ============================ */
+#home{align-items:center; justify-content:center; text-align:center; padding:24px; gap:6px;}
+#home .titlewrap{margin-bottom:6px;}
+#home h1{
+  font-size:clamp(2.3rem,11vw,3.4rem); margin:0; line-height:.95;
+  color:#fff; -webkit-text-stroke:2px var(--blue);
+  text-shadow:4px 4px 0 var(--red), 8px 8px 0 rgba(0,0,0,.15);
+  transform:rotate(-3deg);
+}
+#home .sub{font-weight:700; color:var(--blue); font-size:1rem; margin-top:14px;}
+#home .homebtns{display:flex; flex-direction:column; gap:12px; width:min(340px,86vw); margin-top:14px;}
+.home-matatu{width:min(360px,90vw); margin:6px 0 2px;}
+.credit{position:absolute; bottom:calc(10px + var(--safe-b)); font-size:.72rem; color:var(--ink-soft); opacity:.8;}
+
+/* ============================ TOP HUD ============================ */
+.hud{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px; }
+.hud .icon-btn{width:44px; height:44px; border-radius:14px; background:rgba(255,255,255,.85);
+  box-shadow:0 4px 0 rgba(0,0,0,.12); font-size:1.3rem; display:flex; align-items:center; justify-content:center;}
+.hud .icon-btn:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.12);}
+.hud .center{flex:1; text-align:center; min-width:0;}
+.hud .kicker{font-size:.7rem; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:1px;}
+.hud .checkpoint{font-size:1.05rem; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.coins{display:flex; align-items:center; gap:6px; background:var(--blue); color:#fff; padding:8px 12px;
+  border-radius:14px; font-weight:800; box-shadow:0 4px 0 #12203a; font-variant-numeric:tabular-nums;}
+.coins .c{width:20px; height:20px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ffe08a, var(--yellow) 60%, var(--yellow-d));
+  border:2px solid #fff; box-shadow:inset 0 0 0 2px var(--yellow-d);}
+.coin-pop{animation:coinPop .4s ease;}
+@keyframes coinPop{0%{transform:scale(1);}40%{transform:scale(1.35);}100%{transform:scale(1);}}
+
+/* ============================ GAME LAYOUT ============================ */
+#game{display:flex; flex-direction:column;}
+.bonusbar{display:flex; justify-content:center; padding:0 12px 4px;}
+.bonuschip{background:rgba(255,255,255,.85); border-radius:20px; padding:6px 14px; font-weight:800;
+  color:var(--blue); box-shadow:0 3px 0 rgba(0,0,0,.1); font-size:.9rem; display:inline-flex; gap:8px; align-items:center;}
+.bonuschip .jar{font-size:1.1rem;}
+.bonuschip:active{transform:translateY(2px);}
+
+.gridwrap{flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:6px 10px;}
+.grid{display:grid; gap:4px;}
+.cell{
+  width:var(--cell); height:var(--cell); border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:calc(var(--cell) * .5);
+  color:var(--blue);
+  background:rgba(255,255,255,.32);
+  box-shadow:inset 0 0 0 2px rgba(29,53,87,.18);
+}
+.cell.filled{background:#fff; color:var(--blue); box-shadow:0 3px 0 var(--tile-sh); animation:cellPop .32s cubic-bezier(.2,1.4,.5,1);}
+.cell.hinted{background:#fff2cf; color:var(--orange-d);}
+@keyframes cellPop{0%{transform:scale(.3); opacity:.2;}60%{transform:scale(1.15);}100%{transform:scale(1);}}
+
+/* word in progress */
+.wordbar{height:52px; display:flex; align-items:center; justify-content:center;}
+.wordbubble{min-width:64px; padding:6px 18px; border-radius:16px; font-size:1.6rem; font-weight:800;
+  letter-spacing:3px; color:#fff; background:var(--blue); box-shadow:0 4px 0 #12203a; min-height:48px;
+  display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s;}
+.wordbubble.show{opacity:1;}
+.wordbubble.bonusmatch{background:var(--orange); box-shadow:0 4px 0 var(--orange-d);}
+.wordbubble.answermatch{background:var(--green); box-shadow:0 4px 0 var(--green-d);}
+.wordbubble.shake{animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-9px);}40%{transform:translateX(9px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
+
+/* ============================ WHEEL ============================ */
+.wheelzone{padding:2px 10px calc(10px + var(--safe-b));}
+.controls{display:flex; justify-content:center; gap:14px; margin-bottom:8px;}
+.ctrl{width:54px; height:54px; border-radius:50%; background:#fff; box-shadow:0 5px 0 var(--tile-sh);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:1.4rem; position:relative;}
+.ctrl:active{transform:translateY(4px); box-shadow:0 1px 0 var(--tile-sh);}
+.ctrl .lbl{font-size:.55rem; font-weight:800; color:var(--ink-soft); margin-top:-2px;}
+.ctrl .cost{position:absolute; top:-8px; right:-8px; background:var(--blue); color:#fff; font-size:.6rem;
+  font-weight:800; border-radius:10px; padding:2px 6px; box-shadow:0 2px 0 #12203a;}
+.wheel{position:relative; width:min(300px,82vw); height:min(300px,82vw); margin:0 auto; touch-action:none;}
+.wheel .ring{position:absolute; inset:6%; border-radius:50%;
+  background:radial-gradient(circle at 50% 35%, rgba(255,255,255,.9), rgba(255,255,255,.55));
+  box-shadow:inset 0 0 0 6px rgba(230,57,70,.25), 0 8px 0 rgba(0,0,0,.08);}
+.linecanvas{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:2;}
+.tile{position:absolute; width:var(--twh); height:var(--twh); border-radius:50%;
+  transform:translate(-50%,-50%); display:flex; align-items:center; justify-content:center;
+  font-size:calc(var(--twh) * .46); font-weight:800; color:var(--blue);
+  background:linear-gradient(180deg,#fff,#fff3df); box-shadow:0 5px 0 var(--tile-sh); z-index:3;
+  transition:transform .28s cubic-bezier(.2,1.2,.4,1), background .12s;}
+.tile.sel{background:linear-gradient(180deg,var(--yellow),var(--yellow-d)); color:var(--blue); box-shadow:0 3px 0 #b98600;}
+.centerbtn{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); z-index:4;
+  width:var(--twh); height:var(--twh); border-radius:50%; display:none; align-items:center; justify-content:center;
+  font-size:calc(var(--twh)*.5); background:var(--green); color:#fff; box-shadow:0 4px 0 var(--green-d);}
+.centerbtn.show{display:flex;}
+.centerbtn:active{transform:translate(-50%,-46%);}
+
+/* flying letters */
+.fly{position:fixed; z-index:60; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  font-weight:800; color:var(--blue); background:#fff; box-shadow:0 4px 10px rgba(0,0,0,.25);
+  pointer-events:none; transition:transform .5s cubic-bezier(.4,.1,.2,1), opacity .5s;}
+
+/* ============================ TOASTS ============================ */
+#toasts{position:fixed; left:0; right:0; top:22%; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:70; pointer-events:none;}
+.toast{padding:12px 22px; border-radius:18px; font-weight:800; font-size:1.5rem; color:#fff;
+  background:var(--green); box-shadow:0 6px 0 var(--green-d); animation:toastIn .3s ease, toastOut .3s ease 1s forwards;}
+.toast.bonus{background:var(--orange); box-shadow:0 6px 0 var(--orange-d); font-size:1.2rem;}
+.toast.nudge{background:var(--blue); box-shadow:0 6px 0 #12203a; font-size:1.1rem;}
+@keyframes toastIn{from{transform:translateY(-16px) scale(.8); opacity:0;}to{transform:none; opacity:1;}}
+@keyframes toastOut{to{transform:translateY(-14px) scale(.9); opacity:0;}}
+
+/* ============================ MODALS / OVERLAYS ============================ */
+.overlay{position:fixed; inset:0; background:rgba(20,12,4,.55); z-index:80; display:flex;
+  align-items:center; justify-content:center; padding:20px; animation:fadeIn .2s;}
+.card{background:var(--cream); border-radius:24px; padding:22px; width:min(420px,92vw); max-height:88vh; overflow:auto;
+  box-shadow:0 12px 0 rgba(0,0,0,.2), 0 0 0 4px #fff inset; text-align:center;}
+.card h2{margin:.1em 0 .35em; font-size:1.6rem; color:var(--blue);}
+.card .row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 4px; border-bottom:1px dashed rgba(0,0,0,.15);}
+.card .row:last-child{border-bottom:none;}
+.switch{width:58px; height:32px; border-radius:20px; background:#c9b79a; position:relative; transition:background .2s;}
+.switch.on{background:var(--green);}
+.switch::after{content:""; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff; transition:left .2s;}
+.switch.on::after{left:29px;}
+.bonuslist{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:8px;}
+.bonuslist span{background:var(--orange); color:#fff; padding:5px 12px; border-radius:12px; font-weight:800; letter-spacing:1px;}
+.bonuslist .miss{background:#e6d7bf; color:#a08a68;}
+
+/* ============================ JOURNEY MAP ============================ */
+#map{background:linear-gradient(180deg,#bfe6a8,#8fd07f 60%, #67b86a);}
+.maphead{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 6px;}
+.maphead h2{flex:1; text-align:center; color:#fff; margin:0; -webkit-text-stroke:1.5px var(--blue); text-shadow:2px 2px 0 var(--green-d); font-size:1.5rem;}
+.maproad{flex:1; overflow-y:auto; overflow-x:hidden; padding:10px 0 40px; position:relative;}
+.route{position:relative; width:100%; max-width:520px; margin:0 auto; padding:10px 0;}
+.route::before{content:""; position:absolute; left:50%; top:0; bottom:0; width:54px; transform:translateX(-50%);
+  background:var(--road); border-radius:30px;
+  box-shadow:inset 6px 0 0 rgba(255,255,255,.06), inset -6px 0 0 rgba(0,0,0,.15);}
+.route::after{content:""; position:absolute; left:50%; top:14px; bottom:14px; width:0; transform:translateX(-50%);
+  border-left:5px dashed var(--road-line);}
+.stop{position:relative; display:flex; align-items:center; min-height:78px; z-index:2;}
+.stop .medal{position:absolute; left:50%; transform:translateX(-50%); width:52px; height:52px; border-radius:50%;
+  background:#fff; box-shadow:0 4px 0 rgba(0,0,0,.25); display:flex; align-items:center; justify-content:center;
+  font-weight:800; color:var(--blue); font-size:1.1rem; border:3px solid var(--blue);}
+.stop.done .medal{background:var(--green); color:#fff; border-color:var(--green-d);}
+.stop.current .medal{background:var(--yellow); border-color:var(--red); animation:pulse 1.2s infinite;}
+.stop.locked .medal{background:#cbb89a; color:#fff; border-color:#a58d68;}
+@keyframes pulse{0%,100%{box-shadow:0 4px 0 rgba(0,0,0,.25), 0 0 0 0 rgba(230,57,70,.5);}50%{box-shadow:0 4px 0 rgba(0,0,0,.25), 0 0 0 10px rgba(230,57,70,0);}}
+.stop .label{position:absolute; width:40%; padding:6px 10px; background:#fff; border-radius:12px; box-shadow:0 3px 0 rgba(0,0,0,.15);
+  font-weight:800; font-size:.9rem; color:var(--ink);}
+.stop.left .label{right:52%; text-align:right;}
+.stop.right .label{left:52%; text-align:left;}
+.stop.locked .label{opacity:.7; background:#efe6d4;}
+.stop .label .tag{display:block; font-size:.65rem; font-weight:700; color:var(--ink-soft);}
+.stop.current .label{background:var(--yellow); }
+.stop .matatu-mini{position:absolute; left:50%; transform:translate(-50%,-118%); width:74px; z-index:5; filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));}
+.stop.playable{cursor:pointer;}
+
+/* ============================ LEVEL INTRO ============================ */
+#intro{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;
+  background:linear-gradient(180deg,#ffe8bf,#f7b267);}
+#intro .kicker{font-weight:800; color:var(--blue); letter-spacing:2px; text-transform:uppercase; font-size:.85rem;}
+#intro h2{font-size:2.4rem; margin:.1em 0; color:var(--red); -webkit-text-stroke:1.5px var(--blue); text-shadow:3px 3px 0 rgba(0,0,0,.12);}
+#intro .depart{color:var(--ink-soft); font-weight:700;}
+.intro-matatu{width:min(340px,86vw);}
+
+/* ============================ CELEBRATION ============================ */
+#celebrate{align-items:center; justify-content:center; text-align:center; padding:24px; gap:6px;}
+.celebrate-card{background:var(--cream); border-radius:26px; padding:26px 22px; width:min(420px,92vw);
+  box-shadow:0 12px 0 rgba(0,0,0,.2), 0 0 0 5px #fff inset;}
+.celebrate-card h2{color:var(--green); font-size:1.9rem; margin:.1em 0;}
+.celebrate-card .shout{font-size:1.3rem; font-weight:800; color:var(--red); margin:6px 0;}
+.celebrate-card .stat{display:flex; justify-content:space-around; margin:14px 0; }
+.celebrate-card .stat div{font-weight:800; color:var(--blue);}
+.celebrate-card .stat span{display:block; font-size:.7rem; color:var(--ink-soft); font-weight:700;}
+.arrive-matatu{width:min(300px,80vw); margin:2px auto 6px;}
+
+/* confetti */
+#confetti{position:fixed; inset:0; pointer-events:none; z-index:90; overflow:hidden;}
+.confetti-bit{position:absolute; width:11px; height:16px; top:-20px; will-change:transform;}
+
+/* ============================ ROUTE COMPLETE ============================ */
+#finish{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;
+  background:linear-gradient(180deg,#1D3557,#2b4a78);}
+#finish h1{color:var(--yellow); font-size:2.2rem; -webkit-text-stroke:1.5px #12203a; text-shadow:3px 3px 0 rgba(0,0,0,.3); margin:.1em;}
+#finish .fcard{background:rgba(255,255,255,.95); border-radius:22px; padding:22px; width:min(400px,90vw); box-shadow:0 10px 0 rgba(0,0,0,.3);}
+#finish .stat{display:flex; justify-content:space-around; margin:12px 0;}
+#finish .stat div{font-weight:800; color:var(--blue); font-size:1.4rem;}
+#finish .stat span{display:block; font-size:.72rem; color:var(--ink-soft);}
+
+/* driving animation */
+#drive{position:fixed; inset:0; z-index:85; background:linear-gradient(180deg,#bfe6a8,#8fd07f); display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;}
+#drive .road{position:absolute; left:0; right:0; bottom:0; height:34%; background:var(--road);}
+#drive .road::before{content:""; position:absolute; top:48%; left:0; right:0; height:6px; background:repeating-linear-gradient(90deg,var(--road-line) 0 40px, transparent 40px 80px); animation:dash .5s linear infinite;}
+@keyframes dash{to{background-position:-80px 0;}}
+#drive .drive-matatu{width:min(280px,72vw); position:relative; z-index:2; animation:bob .5s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-6px) rotate(1deg);}}
+#drive .drivelabel{position:absolute; top:16%; font-weight:800; color:var(--blue); font-size:1.3rem; text-align:center; width:90%;}
+
+.tinylink{background:none; text-decoration:underline; color:var(--blue); font-weight:700; font-size:.85rem;}
+.pill{display:inline-block; padding:3px 10px; border-radius:12px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:#fff;}
+.pill.easy{background:var(--green);} .pill.medium{background:var(--yellow); color:var(--ink);}
+.pill.hard{background:var(--orange);} .pill.expert{background:var(--red);}
+</style>
+
+<div id="app"></div>
+<div id="toasts"></div>
+<div id="confetti"></div>
+
+<script src="puzzles.js"></script>
+<script>
+"use strict";
+
+/* ======================================================================
+   // STRINGS  — every visible phrase lives here. Proofread / tweak freely.
+   ====================================================================== */
+const STRINGS = {
+  gameTitle: "Safari ya Matatu",
+  tagline: "Mchezo wa maneno — panda matatu, tafuta maneno!",
+  // buttons / labels
+  cheza: "Cheza",
+  anza: "Anza",
+  endelea: "Endelea",
+  kifuatacho: "Kifuatacho",
+  ramani: "Ramani ya Safari",
+  ramaniShort: "Ramani",
+  mipangilio: "Mipangilio",
+  changanya: "Changanya",
+  kidokezo: "Kidokezo",
+  sarafu: "Sarafu",
+  nauli: "Nauli",
+  kituo: "Kituo",
+  vituo: "Vituo",
+  safari: "Safari",
+  kiwango: "Kiwango",
+  jaribuTena: "Jaribu tena",
+  hongera: "Hongera",
+  umefika: "Umefika",
+  twende: "Twende!",
+  abiria: "Abiria",
+  dere: "Dere",
+  makanga: "Makanga",
+  sauti: "Sauti",
+  funga: "Funga",
+  anzaUpya: "Anza upya",
+  anzaUpyaUliza: "Una uhakika? Utapoteza maendeleo yote ya safari.",
+  ndio: "Ndio, anza upya",
+  sitaki: "La, ghairi",
+  manenoZiada: "Maneno ya Ziada",
+  ukoHapa: "Uko hapa",
+  imefungwa: "Imefungwa",
+  imekamilika: "Imekamilika",
+  // wheel / gameplay
+  kituoKijacho: "Kituo kijacho:",
+  matatuTayari: "Matatu iko tayari kuondoka…",
+  thibitisha: "Thibitisha",
+  bonusJarTitle: "Maneno ya Ziada Uliyopata",
+  bonusHakuna: "Hujapata neno la ziada bado. Yatafute!",
+  bonusHamna: "Kiwango hiki hakina maneno ya ziada.",
+  // toasts / feedback
+  umeshapata: "Umeshapata!",         // already found
+  hakunaSarafu: "Huna sarafu za kutosha!",
+  hakunaKuonyesha: "Hakuna herufi ya kuonyesha.",
+  neno_la_ziada: (n) => `Neno la ziada! +${n} sarafu`,
+  chukua: (n) => `+${n} sarafu`,
+  // praise — rotate, never same twice in a row
+  praise: ["Safi!","Poa!","Vizuri!","Bomba!","Noma!","Freshi!","Hodari!","Umeweza!",
+           "Safi kabisa!","Vizuri sana!","Mzuka!","Endelea hivyo!","Sawa sawa!","Umefanya vizuri!"],
+  // level-complete celebration messages (use %K% for checkpoint)
+  complete: ["Umefika %K%! 🎉","Hongera! Umeshinda nauli!","Twende kituo kifuatacho!","Safari inaendelea!"],
+  makangaShout: ["Beba beba!","Songa mbele!","Twende kazi!","Sonko, karibu!","Noma safari hii!"],
+  fareShout: "Umelipa nauli!",
+  // intro / drive
+  matatuInaendesha: (k) => `Matatu inaelekea ${k}…`,
+  // map
+  mapTitle: "Ramani ya Safari",
+  // finish
+  finishTitle: "Umemaliza safari!",
+  finishSub: "Umefika Mombasa salama salmin!",
+  vituoVilivyokamilika: "Vituo",
+  jumlaSarafu: "Sarafu",
+  manenoYaZiadaJumla: "Maneno ya ziada",
+  shareBtn: "Shiriki safari",
+  shareNakala: "Imenakiliwa! Bandika popote.",
+  shareText: (v, s, b) => `Nimemaliza Safari ya Matatu 🚐! Vituo: ${v}, Sarafu: ${s}, Maneno ya ziada: ${b}. Cheza pia:`,
+  chezaTena: "Cheza tena safari",
+  // settings extras
+  matatuYako: "Matatu yako:",
+  toleo: "Toleo 1.0",
+  // difficulty labels
+  diff: {easy:"Rahisi", medium:"Wastani", hard:"Ngumu", expert:"Bingwa"},
+};
+
+// Matatu slogans / names — one picked (and kept) per playthrough.
+const MATATU_NAMES = ["Subira","Mungu Akipenda","Blessed","Nairobi Express","Detroit","Kaka",
+  "Sonko","Vumilia","Mamba","Simba","Baraka","Machachari","Buruklyn","Msafiri","Imani","Bahati"];
+
+// Matatu colour schemes for a "pimped" bright look.
+const MATATU_SKINS = [
+  {body:"#E63946", stripe:"#FFB703", accent:"#1D3557"},
+  {body:"#2A9D8F", stripe:"#F4802B", accent:"#1D3557"},
+  {body:"#1D3557", stripe:"#E63946", accent:"#FFB703"},
+  {body:"#F4802B", stripe:"#1D3557", accent:"#FFF6E9"},
+  {body:"#6a4c93", stripe:"#FFB703", accent:"#2A9D8F"},
+];
+
+/* ======================================================================
+   REWARDS / COSTS
+   ====================================================================== */
+const CFG = {
+  startSarafu: 60,
+  hintCost: 25,
+  answerCoins: (tiles) => 5 + tiles * 3,   // 3-letter=14, 7-letter=26
+  bonusCoins:  (tiles) => 8 + tiles * 4,
+};
+
+/* ======================================================================
+   PERSISTENCE
+   ====================================================================== */
+const SAVE_KEY = "safari_ya_matatu_v1";
+let state = loadState();
+
+function defaultState(){
+  return {
+    sarafu: CFG.startSarafu,
+    soundOn: true,
+    matatuName: MATATU_NAMES[Math.floor(Math.random()*MATATU_NAMES.length)],
+    skinIdx: Math.floor(Math.random()*MATATU_SKINS.length),
+    currentLevelId: 1,
+    levels: {}, // id -> {completed, foundAnswers:[], foundBonus:[]}
+  };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return defaultState();
+    const s = JSON.parse(raw);
+    // migrate / fill defaults
+    const d = defaultState();
+    return Object.assign(d, s, {levels: s.levels||{}});
+  }catch(e){ return defaultState(); }
+}
+function saveState(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
+}
+function levelRecord(id){
+  if(!state.levels[id]) state.levels[id] = {completed:false, foundAnswers:[], foundBonus:[]};
+  return state.levels[id];
+}
+function isUnlocked(id){
+  if(id===1) return true;
+  const prev = state.levels[id-1];
+  return !!(prev && prev.completed);
+}
+function skin(){ return MATATU_SKINS[state.skinIdx % MATATU_SKINS.length]; }
+
+/* ======================================================================
+   SEEDED RNG (mulberry32) — deterministic grid per levelId
+   ====================================================================== */
+function makeRNG(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* ======================================================================
+   TILE TOKENIZER (digraph aware)
+   ====================================================================== */
+function splitTiles(word, tileset){
+  word = word.toUpperCase();
+  const known = [...new Set(tileset)].sort((a,b)=> b.length - a.length);
+  const out = [];
+  let i = 0;
+  while(i < word.length){
+    let matched = null;
+    for(const t of known){ if(word.startsWith(t, i)){ matched = t; break; } }
+    if(matched){ out.push(matched); i += matched.length; }
+    else { out.push(word[i]); i += 1; }
+  }
+  return out;
+}
+
+/* ======================================================================
+   CROSSWORD GENERATOR — deterministic greedy packer
+   ====================================================================== */
+function generateGrid(puzzle){
+  const rng = makeRNG((puzzle.levelId * 2654435761) >>> 0);
+  const words = puzzle.answers.map((w, i) => ({
+    id: i, word: w, tiles: splitTiles(w, puzzle.letters)
+  }));
+  // longest first; deterministic alpha tiebreak
+  words.sort((a,b)=> b.tiles.length - a.tiles.length || (a.word < b.word ? -1 : 1));
+  words.forEach((w, i) => w.id = i);
+
+  const cells = new Map();
+  const placements = [];
+  const key = (r,c) => r + "," + c;
+  const getCell = (r,c) => cells.get(key(r,c));
+
+  // returns number of crossings if placeable, or false
+  function canPlace(tiles, r, c, dir){
+    const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0;
+    if(getCell(r - dr, c - dc)) return false;                      // before start
+    if(getCell(r + dr*tiles.length, c + dc*tiles.length)) return false; // after end
+    let crossings = 0;
+    for(let i=0;i<tiles.length;i++){
+      const cr = r + dr*i, cc = c + dc*i;
+      const ex = getCell(cr, cc);
+      if(ex){
+        if(ex.letter !== tiles[i]) return false;
+        crossings++;
+      } else {
+        // perpendicular neighbours must be empty (no parallel touching)
+        if(getCell(cr + dc, cc + dr)) return false;
+        if(getCell(cr - dc, cc - dr)) return false;
+      }
+    }
+    return crossings;
+  }
+
+  function place(entry, r, c, dir){
+    const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0;
+    const keys = [];
+    for(let i=0;i<entry.tiles.length;i++){
+      const cr = r + dr*i, cc = c + dc*i, k = key(cr, cc);
+      let cell = cells.get(k);
+      if(!cell){ cell = {r:cr, c:cc, letter:entry.tiles[i], answerIds:[], filled:false, hinted:false}; cells.set(k, cell); }
+      cell.answerIds.push(entry.id);
+      keys.push(k);
+    }
+    placements.push({id:entry.id, word:entry.word, tiles:entry.tiles, r, c, dir, keys, found:false});
+  }
+
+  place(words[0], 0, 0, 'H');
+  for(let w=1; w<words.length; w++){
+    const entry = words[w];
+    let best = null;
+    const existing = [...cells.values()];
+    for(const ex of existing){
+      for(let i=0;i<entry.tiles.length;i++){
+        if(entry.tiles[i] !== ex.letter) continue;
+        for(const dir of ['H','V']){
+          const dr = dir === 'V' ? 1 : 0, dc = dir === 'H' ? 1 : 0;
+          const r = ex.r - dr*i, c = ex.c - dc*i;
+          const res = canPlace(entry.tiles, r, c, dir);
+          if(res === false || res < 1) continue;
+          const score = res*100 - (Math.abs(r) + Math.abs(c)) + rng()*0.01;
+          if(!best || score > best.score) best = {r, c, dir, score};
+        }
+      }
+    }
+    if(best){
+      place(entry, best.r, best.c, best.dir);
+    } else {
+      // fallback: open space just below the current cluster
+      let maxR = -Infinity, minC = Infinity;
+      for(const cell of cells.values()){ maxR = Math.max(maxR, cell.r); minC = Math.min(minC, cell.c); }
+      place(entry, maxR + 2, minC, 'H');
+    }
+  }
+
+  let minR=Infinity, maxR=-Infinity, minC=Infinity, maxC=-Infinity;
+  for(const cell of cells.values()){
+    minR=Math.min(minR,cell.r); maxR=Math.max(maxR,cell.r);
+    minC=Math.min(minC,cell.c); maxC=Math.max(maxC,cell.c);
+  }
+  return {cells, placements, minR, maxR, minC, maxC, rows:maxR-minR+1, cols:maxC-minC+1};
+}
+
+/* ======================================================================
+   WEB AUDIO — tiny procedural SFX (no files)
+   ====================================================================== */
+let audioCtx = null;
+function actx(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  return audioCtx;
+}
+function beep(freq, dur, type, vol, whenOff){
+  if(!state.soundOn) return;
+  const ctx = actx(); if(!ctx) return;
+  const t0 = ctx.currentTime + (whenOff||0);
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type||"sine"; o.frequency.setValueAtTime(freq, t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol||0.2, t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t0); o.stop(t0+dur+0.02);
+}
+const SFX = {
+  select(){ beep(520+Math.random()*40, 0.06, "sine", 0.12); },
+  correct(){ beep(523,0.1,"triangle",0.2,0); beep(659,0.1,"triangle",0.2,0.08); beep(784,0.16,"triangle",0.2,0.16); },
+  bonus(){ beep(880,0.08,"sine",0.18,0); beep(1047,0.08,"sine",0.18,0.07); beep(1319,0.12,"sine",0.18,0.14); },
+  coin(){ beep(1200,0.05,"square",0.12,0); beep(1600,0.07,"square",0.12,0.05); },
+  error(){ beep(180,0.18,"sawtooth",0.14); },
+  nudge(){ beep(330,0.1,"sine",0.12); },
+  hoot(){ beep(310,0.28,"sawtooth",0.22,0); beep(233,0.34,"sawtooth",0.22,0.18); },
+};
+
+/* ======================================================================
+   MATATU SVG  (side view, pimped)
+   ====================================================================== */
+function matatuSVG(name, sk, opts){
+  sk = sk || skin();
+  opts = opts || {};
+  const showPeople = opts.people !== false;
+  const nm = (name || state.matatuName || "Matatu").toUpperCase();
+  return `
+  <svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg" width="100%" role="img" aria-label="Matatu ${nm}">
+    <ellipse cx="110" cy="120" rx="92" ry="8" fill="rgba(0,0,0,.15)"/>
+    <!-- body -->
+    <rect x="14" y="34" width="192" height="64" rx="14" fill="${sk.body}"/>
+    <rect x="14" y="34" width="192" height="64" rx="14" fill="none" stroke="${sk.accent}" stroke-width="3"/>
+    <!-- roof rack -->
+    <rect x="40" y="26" width="140" height="10" rx="4" fill="${sk.accent}"/>
+    <!-- stripe / graffiti band -->
+    <rect x="14" y="60" width="192" height="12" fill="${sk.stripe}"/>
+    <rect x="14" y="72" width="192" height="5" fill="${sk.accent}"/>
+    <!-- windows -->
+    <g fill="#cdeafe" stroke="${sk.accent}" stroke-width="2">
+      <rect x="24" y="40" width="30" height="18" rx="3"/>
+      <rect x="60" y="40" width="30" height="18" rx="3"/>
+      <rect x="96" y="40" width="30" height="18" rx="3"/>
+      <rect x="132" y="40" width="30" height="18" rx="3"/>
+      <rect x="168" y="40" width="28" height="18" rx="3"/>
+    </g>
+    ${showPeople ? `
+    <!-- abiria -->
+    <g>
+      <circle cx="39" cy="52" r="6" fill="#8d5524"/>
+      <circle cx="111" cy="52" r="6" fill="#c68642"/>
+      <circle cx="147" cy="52" r="6" fill="#5a3b1e"/>
+    </g>` : ``}
+    <!-- painted name banner -->
+    <rect x="30" y="80" width="160" height="16" rx="8" fill="#fff"/>
+    <text x="110" y="92" text-anchor="middle" font-family="Baloo 2, Trebuchet MS, sans-serif"
+      font-size="12" font-weight="800" fill="${sk.body}">${nm}</text>
+    <!-- headlight -->
+    <circle cx="202" cy="82" r="4" fill="#FFE39A"/>
+    <!-- makanga hanging off the back door -->
+    <g>
+      <rect x="8" y="46" width="10" height="46" rx="4" fill="${sk.accent}"/>
+      <circle cx="6" cy="60" r="6" fill="#8d5524"/>
+      <rect x="2" y="66" width="8" height="18" rx="3" fill="#264653"/>
+    </g>
+    <!-- wheels -->
+    <g>
+      <circle cx="58" cy="100" r="15" fill="#222"/><circle cx="58" cy="100" r="6" fill="#bbb"/>
+      <circle cx="162" cy="100" r="15" fill="#222"/><circle cx="162" cy="100" r="6" fill="#bbb"/>
+    </g>
+  </svg>`;
+}
+
+/* ======================================================================
+   DOM helpers + screen router
+   ====================================================================== */
+const appEl = document.getElementById("app");
+function el(html){ const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstElementChild; }
+function show(node){ appEl.innerHTML = ""; appEl.appendChild(node); }
+
+function toast(msg, kind){
+  const t = el(`<div class="toast ${kind||''}">${msg}</div>`);
+  document.getElementById("toasts").appendChild(t);
+  setTimeout(()=> t.remove(), 1400);
+}
+
+let lastPraise = -1;
+function praise(){
+  let i;
+  do { i = Math.floor(Math.random()*STRINGS.praise.length); } while(i === lastPraise && STRINGS.praise.length>1);
+  lastPraise = i;
+  return STRINGS.praise[i];
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ======================================================================
+   HOME SCREEN
+   ====================================================================== */
+function renderHome(){
+  const anyProgress = Object.values(state.levels).some(l=>l.completed || (l.foundAnswers&&l.foundAnswers.length));
+  const node = el(`
+    <div class="screen" id="home">
+      <div class="titlewrap"><h1>${STRINGS.gameTitle}</h1></div>
+      <div class="home-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="sub">${STRINGS.tagline}</div>
+      <div class="homebtns">
+        <button class="btn red" id="playBtn">🚐 ${anyProgress ? STRINGS.endelea : STRINGS.anza}</button>
+        <button class="btn green" id="mapBtn">🗺️ ${STRINGS.ramani}</button>
+        <button class="btn ghost" id="setBtn">⚙️ ${STRINGS.mipangilio}</button>
+      </div>
+      <div class="credit">${STRINGS.matatuYako} “${state.matatuName}” · ${STRINGS.toleo}</div>
+    </div>`);
+  node.querySelector("#playBtn").onclick = ()=>{ actx(); startLevel(firstPlayableLevel()); };
+  node.querySelector("#mapBtn").onclick = ()=> renderMap();
+  node.querySelector("#setBtn").onclick = ()=> openSettings();
+  show(node);
+}
+function firstPlayableLevel(){
+  for(const p of PUZZLES){ if(!(state.levels[p.levelId] && state.levels[p.levelId].completed)) return p.levelId; }
+  return PUZZLES[PUZZLES.length-1].levelId; // all done -> last
+}
+
+/* ======================================================================
+   JOURNEY MAP
+   ====================================================================== */
+function renderMap(){
+  const node = el(`
+    <div class="screen" id="map">
+      <div class="maphead">
+        <button class="icon-btn" id="mHome">🏠</button>
+        <h2>${STRINGS.mapTitle}</h2>
+        <div class="coins"><span class="c"></span><span>${state.sarafu}</span></div>
+      </div>
+      <div class="maproad"><div class="route" id="route"></div></div>
+    </div>`);
+  node.querySelector("#mHome").onclick = renderHome;
+  const route = node.querySelector("#route");
+  const currentId = firstPlayableLevel();
+  PUZZLES.forEach((p, idx)=>{
+    const rec = state.levels[p.levelId] || {};
+    const done = rec.completed;
+    const current = p.levelId === currentId;
+    const locked = !isUnlocked(p.levelId) && !done;
+    const side = idx % 2 === 0 ? "left" : "right";
+    const status = done ? "done" : current ? "current" : locked ? "locked" : "";
+    const stop = el(`
+      <div class="stop ${side} ${status} ${(!locked)?'playable':''}" data-id="${p.levelId}">
+        ${current ? `<div class="matatu-mini">${matatuSVG(state.matatuName,null,{people:false})}</div>`:``}
+        <div class="medal">${done ? "✓" : locked ? "🔒" : p.levelId}</div>
+        <div class="label">
+          ${p.checkpoint}
+          <span class="tag">${done ? STRINGS.imekamilika : current ? STRINGS.ukoHapa : locked ? STRINGS.imefungwa : STRINGS.kituo}</span>
+        </div>
+      </div>`);
+    if(!locked){
+      stop.onclick = ()=>{ actx(); startLevel(p.levelId); };
+    }
+    route.appendChild(stop);
+  });
+  show(node);
+  // scroll current stop into view
+  requestAnimationFrame(()=>{
+    const cur = route.querySelector(".stop.current") || route.querySelector(".stop.playable");
+    if(cur) cur.scrollIntoView({block:"center"});
+  });
+}
+
+/* ======================================================================
+   LEVEL INTRO ("Kituo kijacho")
+   ====================================================================== */
+function startLevel(levelId){
+  const puzzle = PUZZLES.find(p=>p.levelId===levelId) || PUZZLES[0];
+  const node = el(`
+    <div class="screen" id="intro">
+      <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · <span class="pill ${puzzle.difficulty}">${STRINGS.diff[puzzle.difficulty]||puzzle.difficulty}</span></div>
+      <div class="kicker">${STRINGS.kituoKijacho}</div>
+      <h2>${puzzle.checkpoint}</h2>
+      <div class="intro-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="depart">${STRINGS.matatuTayari}</div>
+      <button class="btn red" id="go">${STRINGS.twende}</button>
+      <button class="tinylink" id="toMap">${STRINGS.ramaniShort}</button>
+    </div>`);
+  node.querySelector("#go").onclick = ()=> renderGame(puzzle);
+  node.querySelector("#toMap").onclick = renderMap;
+  show(node);
+}
+
+/* ======================================================================
+   GAMEPLAY
+   ====================================================================== */
+let G = null; // active game context
+
+function renderGame(puzzle){
+  const grid = generateGrid(puzzle);
+  const rec = levelRecord(puzzle.levelId);
+
+  G = {
+    puzzle, grid,
+    cellEls: new Map(),
+    tileEls: [],
+    tileOrder: puzzle.letters.map((_, i)=> i), // wheel display order (shuffleable)
+    centers: [],
+    selection: [],       // tile indices (into puzzle.letters)
+    tapMode: false,
+    dragging: false,
+    moved: false,
+    foundAnswers: new Set(rec.foundAnswers || []),
+    foundBonus: new Set(rec.foundBonus || []),
+  };
+
+  const totalBonus = puzzle.bonusWords.length;
+  const node = el(`
+    <div class="screen" id="game">
+      <div class="hud">
+        <button class="icon-btn" id="gMap">🗺️</button>
+        <div class="center">
+          <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · ${STRINGS.kituo}</div>
+          <div class="checkpoint">${puzzle.checkpoint}</div>
+        </div>
+        <div class="coins" id="coinBox"><span class="c"></span><span id="coinNum">${state.sarafu}</span></div>
+      </div>
+      ${totalBonus>0 ? `<div class="bonusbar"><button class="bonuschip" id="bonusChip">
+          <span class="jar">🫙</span> ${STRINGS.manenoZiada}: <span id="bonusCount">${G.foundBonus.size}</span>/${totalBonus}</button></div>`:``}
+      <div class="gridwrap"><div class="grid" id="grid"></div></div>
+      <div class="wordbar"><div class="wordbubble" id="wordBubble"></div></div>
+      <div class="wheelzone">
+        <div class="controls">
+          <button class="ctrl" id="shuffleBtn" title="${STRINGS.changanya}">🔀<span class="lbl">${STRINGS.changanya}</span></button>
+          <button class="ctrl" id="hintBtn" title="${STRINGS.kidokezo}">💡<span class="lbl">${STRINGS.kidokezo}</span><span class="cost"><span class="c" style="width:10px;height:10px;display:inline-block;border-radius:50%;background:var(--yellow);vertical-align:-1px"></span>${CFG.hintCost}</span></button>
+        </div>
+        <div class="wheel" id="wheel">
+          <div class="ring"></div>
+          <svg class="linecanvas" id="lineCanvas" preserveAspectRatio="none"></svg>
+          <button class="centerbtn" id="centerBtn">✓</button>
+        </div>
+      </div>
+    </div>`);
+
+  node.querySelector("#gMap").onclick = renderMap;
+  node.querySelector("#shuffleBtn").onclick = shuffleWheel;
+  node.querySelector("#hintBtn").onclick = useHint;
+  const bc = node.querySelector("#bonusChip");
+  if(bc) bc.onclick = openBonusJar;
+  const cbtn = node.querySelector("#centerBtn");
+  cbtn.onclick = ()=> submitSelection();
+
+  show(node);
+  buildGrid();
+  buildWheel();
+  restoreFound();
+  attachWheelInput();
+  attachKeyboard();
+  window.addEventListener("resize", onResize);
+}
+
+function onResize(){
+  if(!G || !document.getElementById("game")){ window.removeEventListener("resize", onResize); return; }
+  sizeGrid(); layoutWheel(); drawLine();
+}
+
+/* ---- grid ---- */
+function buildGrid(){
+  const gridEl = document.getElementById("grid");
+  gridEl.innerHTML = "";
+  const {grid} = G;
+  gridEl.style.gridTemplateColumns = `repeat(${grid.cols}, var(--cell))`;
+  gridEl.style.gridTemplateRows = `repeat(${grid.rows}, var(--cell))`;
+  for(const cell of grid.cells.values()){
+    const ce = el(`<div class="cell" data-key="${cell.r},${cell.c}"></div>`);
+    ce.style.gridRow = (cell.r - grid.minR + 1);
+    ce.style.gridColumn = (cell.c - grid.minC + 1);
+    gridEl.appendChild(ce);
+    G.cellEls.set(cell.r+","+cell.c, ce);
+  }
+  sizeGrid();
+}
+function sizeGrid(){
+  const {grid} = G;
+  const wrap = document.querySelector(".gridwrap");
+  if(!wrap) return;
+  const availW = wrap.clientWidth - 8;
+  const availH = wrap.clientHeight - 8;
+  const gap = 4;
+  const cw = (availW - gap*(grid.cols-1)) / grid.cols;
+  const ch = (availH - gap*(grid.rows-1)) / grid.rows;
+  let size = Math.floor(Math.min(cw, ch));
+  size = Math.max(20, Math.min(size, 56));
+  document.getElementById("grid").style.setProperty("--cell", size + "px");
+}
+
+/* ---- wheel ---- */
+function buildWheel(){
+  const wheel = document.getElementById("wheel");
+  // remove existing tiles
+  wheel.querySelectorAll(".tile").forEach(t=>t.remove());
+  G.tileEls = [];
+  G.puzzle.letters.forEach((letter, idx)=>{
+    const t = el(`<div class="tile" data-idx="${idx}">${letter}</div>`);
+    wheel.appendChild(t);
+    G.tileEls[idx] = t;
+  });
+  layoutWheel();
+}
+function layoutWheel(){
+  const wheel = document.getElementById("wheel");
+  if(!wheel) return;
+  const W = wheel.clientWidth, H = wheel.clientHeight;
+  const n = G.puzzle.letters.length;
+  const tw = Math.max(44, Math.min(72, Math.floor(W * (n>6?0.19:0.22))));
+  wheel.style.setProperty("--twh", tw + "px");
+  const cx = W/2, cy = H/2;
+  const R = Math.min(W,H)/2 - tw/2 - 8;
+  G.centers = [];
+  G.tileOrder.forEach((tileIdx, pos)=>{
+    const ang = (-Math.PI/2) + pos * (2*Math.PI/n);
+    const x = cx + R*Math.cos(ang);
+    const y = cy + R*Math.sin(ang);
+    const t = G.tileEls[tileIdx];
+    t.style.left = x + "px";
+    t.style.top = y + "px";
+    G.centers[tileIdx] = {x, y};
+  });
+}
+function shuffleWheel(){
+  // Fisher-Yates on display order
+  const o = G.tileOrder;
+  for(let i=o.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [o[i],o[j]]=[o[j],o[i]]; }
+  layoutWheel(); drawLine(); SFX.select();
+}
+
+/* ---- selection line ---- */
+function drawLine(){
+  const svg = document.getElementById("lineCanvas");
+  if(!svg) return;
+  const wheel = document.getElementById("wheel");
+  const W = wheel.clientWidth, H = wheel.clientHeight;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  let pts = G.selection.map(i=> G.centers[i]).filter(Boolean);
+  let d = "";
+  if(pts.length){
+    d = pts.map((p,i)=> (i?"L":"M")+p.x+" "+p.y).join(" ");
+    if(G.dragging && G.pointer){ d += ` L${G.pointer.x} ${G.pointer.y}`; }
+  }
+  const sk = skin();
+  svg.innerHTML = pts.length ? `<path d="${d}" fill="none" stroke="${sk.body}" stroke-width="10"
+    stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>` : "";
+  // highlight selected tiles + word bubble
+  G.tileEls.forEach((t,i)=> t && t.classList.toggle("sel", G.selection.includes(i)));
+  updateWordBubble();
+}
+function currentWord(){ return G.selection.map(i=> G.puzzle.letters[i]).join(""); }
+function updateWordBubble(){
+  const b = document.getElementById("wordBubble");
+  if(!b) return;
+  const w = currentWord();
+  b.textContent = w;
+  b.classList.toggle("show", w.length>0);
+  b.classList.remove("answermatch","bonusmatch");
+  if(w.length>0){
+    if(G.puzzle.answers.includes(w) && !G.foundAnswers.has(w)) b.classList.add("answermatch");
+    else if(G.puzzle.bonusWords.includes(w) && !G.foundBonus.has(w)) b.classList.add("bonusmatch");
+  }
+}
+
+/* ---- pointer input on wheel ---- */
+function tileAt(x, y){
+  // x,y relative to wheel
+  const twh = parseFloat(getComputedStyle(document.getElementById("wheel")).getPropertyValue("--twh"));
+  const rad = twh*0.55;
+  let bestIdx = -1, bestD = rad;
+  for(let i=0;i<G.centers.length;i++){
+    const c = G.centers[i]; if(!c) continue;
+    const d = Math.hypot(c.x-x, c.y-y);
+    if(d < bestD){ bestD = d; bestIdx = i; }
+  }
+  return bestIdx;
+}
+function attachWheelInput(){
+  const wheel = document.getElementById("wheel");
+  const rel = (e)=>{ const r = wheel.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; };
+
+  wheel.addEventListener("pointerdown", (e)=>{
+    if(e.target.closest("#centerBtn")) return;
+    const p = rel(e); const idx = tileAt(p.x, p.y);
+    if(idx < 0){ // tapped empty wheel -> if tapMode, ignore
+      return;
+    }
+    actx();
+    wheel.setPointerCapture(e.pointerId);
+    if(G.tapMode){
+      // tap accumulation
+      if(G.selection.length && G.selection[G.selection.length-1] === idx){
+        submitSelection(); return;
+      }
+      if(!G.selection.includes(idx)){ G.selection.push(idx); SFX.select(); }
+      drawLine(); updateCenterBtn();
+      return;
+    }
+    // begin drag gesture
+    G.dragging = true; G.moved = false;
+    G.selection = [idx]; G.pointer = p; SFX.select();
+    drawLine();
+  });
+
+  wheel.addEventListener("pointermove", (e)=>{
+    if(!G.dragging) return;
+    const p = rel(e); G.pointer = p;
+    const idx = tileAt(p.x, p.y);
+    if(idx >= 0){
+      const last = G.selection[G.selection.length-1];
+      const secondLast = G.selection[G.selection.length-2];
+      if(idx === secondLast){ G.selection.pop(); G.moved = true; SFX.select(); }
+      else if(idx !== last && !G.selection.includes(idx)){ G.selection.push(idx); G.moved = true; SFX.select(); }
+    }
+    drawLine();
+  });
+
+  const endDrag = (e)=>{
+    if(!G.dragging) return;
+    G.dragging = false; G.pointer = null;
+    if(G.moved && G.selection.length >= 2){
+      submitSelection();
+    } else if(!G.moved && G.selection.length === 1){
+      // single tap -> enter tap-accumulation mode, keep the letter
+      G.tapMode = true;
+      drawLine(); updateCenterBtn();
+    } else {
+      clearSelection();
+    }
+  };
+  wheel.addEventListener("pointerup", endDrag);
+  wheel.addEventListener("pointercancel", endDrag);
+}
+function updateCenterBtn(){
+  const cb = document.getElementById("centerBtn");
+  if(!cb) return;
+  cb.classList.toggle("show", G.tapMode && G.selection.length >= 2);
+}
+function clearSelection(){
+  G.selection = []; G.tapMode = false; G.moved = false;
+  drawLine(); updateCenterBtn();
+}
+
+/* ---- keyboard ---- */
+function attachKeyboard(){
+  document.onkeydown = (e)=>{
+    if(!document.getElementById("game")) return;
+    const k = e.key;
+    if(k === "Enter"){ if(G.selection.length) submitSelection(); e.preventDefault(); return; }
+    if(k === "Backspace"){ G.selection.pop(); G.tapMode = G.selection.length>0; drawLine(); updateCenterBtn(); e.preventDefault(); return; }
+    if(k === "Escape"){ clearSelection(); return; }
+    const up = k.toUpperCase();
+    // find first unused tile matching this letter
+    for(let i=0;i<G.puzzle.letters.length;i++){
+      if(G.puzzle.letters[i] === up && !G.selection.includes(i)){
+        actx(); G.tapMode = true; G.selection.push(i); SFX.select(); drawLine(); updateCenterBtn();
+        break;
+      }
+    }
+  };
+}
+
+/* ---- restore previously found on re-entry ---- */
+function restoreFound(){
+  // fill grid cells for already-found answers
+  for(const pl of G.grid.placements){
+    if(G.foundAnswers.has(pl.word)){ pl.found = true; fillPlacement(pl, false); }
+  }
+  updateBonusCount();
+}
+
+/* ---- submit / evaluate ---- */
+function submitSelection(){
+  const word = currentWord();
+  const b = document.getElementById("wordBubble");
+  clearSelectionKeepBubble();
+  if(word.length < 2){ clearSelection(); return; }
+
+  if(G.puzzle.answers.includes(word)){
+    if(G.foundAnswers.has(word)){ nudge(); return; }
+    acceptAnswer(word);
+  } else if(G.puzzle.bonusWords.includes(word)){
+    if(G.foundBonus.has(word)){ nudge(); return; }
+    acceptBonus(word);
+  } else {
+    // invalid
+    b.classList.add("shake"); SFX.error();
+    setTimeout(()=> b && b.classList.remove("shake"), 400);
+    clearSelection();
+  }
+}
+function clearSelectionKeepBubble(){
+  G.selection = []; G.tapMode = false; G.moved = false; G.dragging = false;
+  G.tileEls.forEach(t=> t && t.classList.remove("sel"));
+  drawLineOnly();
+  updateCenterBtn();
+}
+function drawLineOnly(){
+  const svg = document.getElementById("lineCanvas"); if(svg) svg.innerHTML = "";
+}
+
+function nudge(){
+  toast(STRINGS.umeshapata, "nudge"); SFX.nudge();
+  const b = document.getElementById("wordBubble"); if(b){ b.classList.add("shake"); setTimeout(()=>b.classList.remove("shake"),400); }
+  clearSelection();
+}
+
+function acceptAnswer(word){
+  G.foundAnswers.add(word);
+  const pl = G.grid.placements.find(p=> p.word === word && !p.found) || G.grid.placements.find(p=>p.word===word);
+  if(pl) pl.found = true;
+  const coins = CFG.answerCoins(pl ? pl.tiles.length : word.length);
+  SFX.correct();
+  toast(praise(), "");
+  flyAndFill(pl, word);
+  awardCoins(coins);
+  persistFound();
+  clearSelection();
+}
+function acceptBonus(word){
+  G.foundBonus.add(word);
+  const coins = CFG.bonusCoins(splitTiles(word, G.puzzle.letters).length);
+  SFX.bonus();
+  toast(STRINGS.neno_la_ziada(coins), "bonus");
+  awardCoins(coins);
+  updateBonusCount();
+  persistFound();
+  clearSelection();
+}
+
+function awardCoins(n){
+  state.sarafu += n;
+  const box = document.getElementById("coinBox");
+  const num = document.getElementById("coinNum");
+  if(num) num.textContent = state.sarafu;
+  if(box){ box.classList.remove("coin-pop"); void box.offsetWidth; box.classList.add("coin-pop"); }
+  SFX.coin();
+  saveState();
+}
+
+function updateBonusCount(){
+  const c = document.getElementById("bonusCount");
+  if(c) c.textContent = G.foundBonus.size;
+}
+function persistFound(){
+  const rec = levelRecord(G.puzzle.levelId);
+  rec.foundAnswers = [...G.foundAnswers];
+  rec.foundBonus = [...G.foundBonus];
+  saveState();
+}
+
+/* ---- fill a placement's cells (no animation) ---- */
+function fillPlacement(pl, pop){
+  pl.keys.forEach((k)=>{
+    const cell = G.grid.cells.get(k);
+    cell.filled = true;
+    const ce = G.cellEls.get(k);
+    if(ce){
+      ce.textContent = cell.letter;
+      if(pop){ ce.classList.remove("filled"); void ce.offsetWidth; }
+      ce.classList.add("filled");
+    }
+  });
+}
+
+/* ---- flying letters animation then fill + completion check ---- */
+function flyAndFill(pl, word){
+  if(!pl){ checkComplete(); return; }
+  const tiles = splitTiles(word, G.puzzle.letters);
+  // map answer position -> screen source tile (best-effort by letter order)
+  pl.keys.forEach((k, i)=>{
+    const cell = G.grid.cells.get(k);
+    const ce = G.cellEls.get(k);
+    if(!ce) return;
+    if(cell.filled){ return; } // crossing already filled
+    // source: a wheel tile whose letter matches tiles[i]
+    let srcIdx = -1;
+    for(let s=0;s<G.puzzle.letters.length;s++){ if(G.puzzle.letters[s]===tiles[i]){ srcIdx = s; break; } }
+    const srcEl = srcIdx>=0 ? G.tileEls[srcIdx] : null;
+    const targetRect = ce.getBoundingClientRect();
+    const startRect = srcEl ? srcEl.getBoundingClientRect() : targetRect;
+    const fly = el(`<div class="fly">${cell.letter}</div>`);
+    Object.assign(fly.style, {
+      left: startRect.left + "px", top: startRect.top + "px",
+      width: startRect.width + "px", height: startRect.height + "px",
+      fontSize: (targetRect.width*0.5) + "px",
+    });
+    document.body.appendChild(fly);
+    const dx = targetRect.left - startRect.left + (targetRect.width-startRect.width)/2;
+    const dy = targetRect.top - startRect.top + (targetRect.height-startRect.height)/2;
+    requestAnimationFrame(()=>{
+      fly.style.transform = `translate(${dx}px,${dy}px) scale(${targetRect.width/startRect.width})`;
+    });
+    setTimeout(()=>{
+      fly.remove();
+      cell.filled = true;
+      ce.textContent = cell.letter;
+      ce.classList.add("filled");
+    }, 480 + i*40);
+  });
+  setTimeout(()=> checkComplete(), 520 + pl.keys.length*40);
+}
+
+/* ---- hint ---- */
+function useHint(){
+  if(state.sarafu < CFG.hintCost){ toast(STRINGS.hakunaSarafu, "nudge"); SFX.error(); return; }
+  // pick a random empty cell
+  const empties = [...G.grid.cells.values()].filter(c=> !c.filled);
+  if(!empties.length){ toast(STRINGS.hakunaKuonyesha, "nudge"); return; }
+  state.sarafu -= CFG.hintCost;
+  const num = document.getElementById("coinNum"); if(num) num.textContent = state.sarafu;
+  const cell = empties[Math.floor(Math.random()*empties.length)];
+  cell.filled = true; cell.hinted = true;
+  const ce = G.cellEls.get(cell.r+","+cell.c);
+  if(ce){ ce.textContent = cell.letter; ce.classList.add("filled","hinted"); }
+  SFX.coin();
+  // any answer now fully filled -> found
+  for(const pl of G.grid.placements){
+    if(!pl.found && pl.keys.every(k=> G.grid.cells.get(k).filled)){
+      pl.found = true; G.foundAnswers.add(pl.word);
+    }
+  }
+  persistFound(); saveState();
+  checkComplete();
+}
+
+/* ---- bonus jar list ---- */
+function openBonusJar(){
+  const words = G.puzzle.bonusWords;
+  const found = G.foundBonus;
+  const items = words.map(w=> found.has(w)
+    ? `<span>${w}</span>`
+    : `<span class="miss">•••</span>`).join("");
+  const body = found.size===0
+    ? `<p>${STRINGS.bonusHakuna}</p>`
+    : `<div class="bonuslist">${items}</div>`;
+  openModal(`
+    <h2>🫙 ${STRINGS.bonusJarTitle}</h2>
+    <p style="font-weight:800;color:var(--orange)">${found.size} / ${words.length}</p>
+    ${body}
+    <div style="margin-top:16px"><button class="btn" data-close>${STRINGS.funga}</button></div>
+  `);
+}
+
+/* ---- completion ---- */
+function checkComplete(){
+  if(!G || !G.grid.placements.every(p=> p.found)) return;
+  if(G.completed) return;
+  G.completed = true;
+  const rec = levelRecord(G.puzzle.levelId);
+  const firstTime = !rec.completed;
+  rec.completed = true;
+  persistFound();
+  state.currentLevelId = Math.min(G.puzzle.levelId + 1, PUZZLES.length);
+  saveState();
+  setTimeout(()=> celebrate(G.puzzle, firstTime), 400);
+}
+
+/* ======================================================================
+   CELEBRATION (level complete)
+   ====================================================================== */
+function celebrate(puzzle, firstTime){
+  window.removeEventListener("resize", onResize);
+  document.onkeydown = null;
+  SFX.hoot();
+  launchConfetti();
+  const isLast = puzzle.levelId >= PUZZLES.length;
+  const msg = pick(STRINGS.complete).replace("%K%", puzzle.checkpoint);
+  const shout = pick(STRINGS.makangaShout);
+  const bonusFound = (state.levels[puzzle.levelId].foundBonus || []).length;
+  const node = el(`
+    <div class="screen" id="celebrate">
+      <div class="celebrate-card">
+        <div class="arrive-matatu">${matatuSVG(state.matatuName)}</div>
+        <h2>${msg}</h2>
+        <div class="shout">🗣️ ${shout}</div>
+        <div class="depart" style="color:var(--green-d);font-weight:800">${STRINGS.fareShout}</div>
+        <div class="stat">
+          <div>${state.sarafu}<span>${STRINGS.jumlaSarafu}</span></div>
+          <div>${bonusFound}/${puzzle.bonusWords.length}<span>${STRINGS.manenoZiada}</span></div>
+          <div>${puzzle.levelId}/${PUZZLES.length}<span>${STRINGS.vituo}</span></div>
+        </div>
+        <button class="btn red" id="next">${isLast ? "🏁 "+STRINGS.umefika : "🚐 "+STRINGS.kifuatacho}</button>
+      </div>
+    </div>`);
+  node.querySelector("#next").onclick = ()=>{
+    if(isLast){ renderFinish(); }
+    else { driveTo(puzzle.levelId + 1); }
+  };
+  show(node);
+}
+
+/* driving transition to next kituo */
+function driveTo(nextId){
+  const next = PUZZLES.find(p=>p.levelId===nextId);
+  const overlay = el(`
+    <div id="drive">
+      <div class="drivelabel">${STRINGS.matatuInaendesha(next ? next.checkpoint : "")}</div>
+      <div class="drive-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="road"></div>
+    </div>`);
+  document.body.appendChild(overlay);
+  const car = overlay.querySelector(".drive-matatu");
+  // slide across then settle
+  car.animate([
+    {transform:"translateX(-120vw)"},
+    {transform:"translateX(0)"},
+  ], {duration:1400, easing:"cubic-bezier(.3,.7,.4,1)", fill:"forwards"});
+  setTimeout(()=>{ overlay.remove(); startLevel(nextId); }, 1550);
+}
+
+/* ======================================================================
+   ROUTE COMPLETE
+   ====================================================================== */
+function renderFinish(){
+  const cleared = PUZZLES.filter(p=> state.levels[p.levelId] && state.levels[p.levelId].completed).length;
+  let bonusTotal = 0;
+  for(const p of PUZZLES){ const r=state.levels[p.levelId]; if(r&&r.foundBonus) bonusTotal += r.foundBonus.length; }
+  const node = el(`
+    <div class="screen" id="finish">
+      <h1>🎉 ${STRINGS.finishTitle}</h1>
+      <div class="arrive-matatu" style="width:min(320px,82vw)">${matatuSVG(state.matatuName)}</div>
+      <div class="fcard">
+        <div style="font-weight:800;color:var(--green-d)">${STRINGS.finishSub}</div>
+        <div class="stat">
+          <div>${cleared}/${PUZZLES.length}<span>${STRINGS.vituoVilivyokamilika}</span></div>
+          <div>${state.sarafu}<span>${STRINGS.jumlaSarafu}</span></div>
+          <div>${bonusTotal}<span>${STRINGS.manenoYaZiadaJumla}</span></div>
+        </div>
+        <button class="btn green" id="share">🔗 ${STRINGS.shareBtn}</button>
+        <div style="margin-top:12px"><button class="btn ghost sm" id="fMap">${STRINGS.ramaniShort}</button>
+        <button class="btn ghost sm" id="fReset">${STRINGS.chezaTena}</button></div>
+      </div>
+    </div>`);
+  node.querySelector("#share").onclick = ()=> shareSafari(cleared, bonusTotal);
+  node.querySelector("#fMap").onclick = renderMap;
+  node.querySelector("#fReset").onclick = ()=> confirmReset();
+  launchConfetti();
+  SFX.hoot();
+  show(node);
+}
+function shareSafari(cleared, bonusTotal){
+  const url = location.href.split("#")[0];
+  const text = STRINGS.shareText(`${cleared}/${PUZZLES.length}`, state.sarafu, bonusTotal) + " " + url;
+  const done = ()=> toast(STRINGS.shareNakala, "");
+  if(navigator.share){
+    navigator.share({title:STRINGS.gameTitle, text, url}).catch(()=>{ copyText(text, done); });
+  } else { copyText(text, done); }
+}
+function copyText(text, cb){
+  if(navigator.clipboard){ navigator.clipboard.writeText(text).then(cb, ()=>fallbackCopy(text,cb)); }
+  else fallbackCopy(text, cb);
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement("textarea"); ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  ta.remove(); cb && cb();
+}
+
+/* ======================================================================
+   CONFETTI
+   ====================================================================== */
+function launchConfetti(){
+  const layer = document.getElementById("confetti");
+  const colors = ["#E63946","#FFB703","#2A9D8F","#1D3557","#F4802B","#fff"];
+  for(let i=0;i<90;i++){
+    const bit = document.createElement("div");
+    bit.className = "confetti-bit";
+    bit.style.left = Math.random()*100 + "vw";
+    bit.style.background = colors[i % colors.length];
+    bit.style.borderRadius = Math.random()<0.5 ? "2px" : "50%";
+    layer.appendChild(bit);
+    const dur = 1400 + Math.random()*1400;
+    const rot = (Math.random()*720-360);
+    bit.animate([
+      {transform:`translateY(-20px) rotate(0deg)`, opacity:1},
+      {transform:`translateY(105vh) rotate(${rot}deg)`, opacity:1},
+    ], {duration:dur, easing:"cubic-bezier(.2,.6,.4,1)", delay:Math.random()*400, fill:"forwards"});
+    setTimeout(()=> bit.remove(), dur+500);
+  }
+}
+
+/* ======================================================================
+   MODALS + SETTINGS
+   ====================================================================== */
+function openModal(html){
+  const ov = el(`<div class="overlay"><div class="card">${html}</div></div>`);
+  ov.addEventListener("click",(e)=>{ if(e.target===ov || e.target.hasAttribute("data-close")) ov.remove(); });
+  document.body.appendChild(ov);
+  return ov;
+}
+function openSettings(){
+  const ov = openModal(`
+    <h2>⚙️ ${STRINGS.mipangilio}</h2>
+    <div class="row">
+      <span>🔊 ${STRINGS.sauti}</span>
+      <div class="switch ${state.soundOn?'on':''}" id="soundSw"></div>
+    </div>
+    <div class="row">
+      <span>🚐 ${STRINGS.matatuYako}</span>
+      <strong>${state.matatuName}</strong>
+    </div>
+    <div class="row">
+      <span>↺ ${STRINGS.anzaUpya}</span>
+      <button class="btn red sm" id="resetBtn">${STRINGS.anzaUpya}</button>
+    </div>
+    <div style="margin-top:14px"><button class="btn" data-close>${STRINGS.funga}</button></div>
+    <div style="margin-top:8px;font-size:.72rem;color:var(--ink-soft)">${STRINGS.toleo}</div>
+  `);
+  const sw = ov.querySelector("#soundSw");
+  sw.onclick = ()=>{ state.soundOn = !state.soundOn; sw.classList.toggle("on", state.soundOn); if(state.soundOn){actx(); SFX.select();} saveState(); };
+  ov.querySelector("#resetBtn").onclick = ()=>{ ov.remove(); confirmReset(); };
+}
+function confirmReset(){
+  const ov = openModal(`
+    <h2>↺ ${STRINGS.anzaUpya}</h2>
+    <p>${STRINGS.anzaUpyaUliza}</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+      <button class="btn ghost" data-close>${STRINGS.sitaki}</button>
+      <button class="btn red" id="doReset">${STRINGS.ndio}</button>
+    </div>
+  `);
+  ov.querySelector("#doReset").onclick = ()=>{
+    localStorage.removeItem(SAVE_KEY);
+    state = defaultState(); saveState();
+    ov.remove(); renderHome();
+  };
+}
+
+/* ======================================================================
+   BOOT
+   ====================================================================== */
+saveState();   // lock in the randomly-painted matatu name/skin on first visit
+renderHome();
+
+// register service worker (ignored on file://, that's fine — game still works)
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
