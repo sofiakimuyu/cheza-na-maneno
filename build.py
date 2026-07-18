@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Safari ya Matatu — build step.
+Matatu ya Maneno — build step.
 
 Converts `swahili_wordscapes_levels_1-30.csv` into an embedded `puzzles.js`
 (`const PUZZLES = [...]`) that the game loads directly. We embed rather than
