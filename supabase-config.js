@@ -14,6 +14,6 @@
  * offline, no scoreboard, no telemetry, nothing broken.
  */
 window.SUPABASE_CONFIG = {
-  url:     "",   // e.g. https://abcdefghijklm.supabase.co
-  anonKey: "",   // the anon / publishable key (NOT service_role)
+  url:     "https://uhdxrmkqrdzhmdauxuxd.supabase.co",
+  anonKey: "sb_publishable_yP9cR_MRHKnkCbhhvN4v2g_mw_pCQMh",
 };
