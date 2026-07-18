@@ -3,11 +3,11 @@
 <meta name="theme-color" content="#E63946" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Safari ya Matatu" />
+<meta name="apple-mobile-web-app-title" content="Matatu ya Maneno" />
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="icon.svg" />
-<title>Safari ya Matatu</title>
+<title>Matatu ya Maneno</title>
 
 <style>
 /* ============================ THEME / PALETTE ============================ */
@@ -49,6 +49,47 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
   animation:fadeIn .25s ease; overflow:hidden;}
 @keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
 
+/* ============================ ROAD SCENERY ============================
+   Every screen sits on a photo of a Kenyan road, swapped as the player works
+   down the route (see setScene). Two photo layers cross-fade so a scene change
+   never blinks. `.scrim` is the veil that keeps the UI readable on top; how
+   heavy it is depends on how busy the screen above it is. */
+#scene{position:fixed; inset:0; z-index:-2; overflow:hidden;
+  background:linear-gradient(180deg,#ffe8bf 0%, #ffd79a 42%, #f7b267 100%);}
+#scene .photo{position:absolute; inset:0; background-size:cover; background-position:center;
+  opacity:0; transition:opacity .55s ease, filter .45s ease, transform .45s ease;}
+#scene .photo.on{opacity:var(--photo-op,1);}
+#scene .scrim{position:absolute; inset:0; transition:background .45s ease;}
+
+/* Open road — title, kituo intro, arrival. A soft glow sits under the centred
+   content so copy always lands on something light, while the edges of the
+   frame stay vivid. Some of these photos (city gridlock) are very busy, so the
+   glow does the readability work a flat veil couldn't without killing them. */
+#scene[data-veil="open"] .scrim{
+  background:
+    radial-gradient(125% 58% at 50% 46%, rgba(255,246,233,.74) 0%,
+      rgba(255,246,233,.34) 54%, rgba(255,246,233,0) 78%),
+    linear-gradient(180deg, rgba(255,246,233,.60) 0%, rgba(255,246,233,.22) 34%,
+      rgba(255,228,188,.28) 64%, rgba(52,34,16,.50) 100%);}
+
+/* gameplay — the busiest screen, so the road drops back and softens */
+#scene[data-veil="play"] .photo{filter:blur(3px) saturate(.85); transform:scale(1.06);}
+#scene[data-veil="play"] .scrim{
+  background:linear-gradient(180deg, rgba(255,246,233,.82) 0%, rgba(255,246,233,.72) 38%,
+    rgba(255,230,195,.76) 100%);}
+
+/* end of the line — keeps the old navy mood, with Mombasa showing through */
+#scene[data-veil="dusk"] .scrim{
+  background:linear-gradient(180deg, rgba(29,53,87,.60) 0%, rgba(29,53,87,.80) 100%);}
+
+/* The journey map carries no veil of its own — the 80% photo opacity alone
+   softens it. It sits on near-white rather than the warm gradient so that 20%
+   fades the map toward paper instead of tinting it orange, and it's sized to
+   `contain` so the whole country is visible behind the route. */
+#scene[data-veil="map"]{background:#fdf7ec;}
+#scene[data-veil="map"] .photo{background-size:contain; background-repeat:no-repeat;}
+#scene[data-veil="map"] .scrim{background:transparent;}
+
 /* chunky buttons */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:.5em;
@@ -74,10 +115,13 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
   text-shadow:4px 4px 0 var(--red), 8px 8px 0 rgba(0,0,0,.15);
   transform:rotate(-3deg);
 }
-#home .sub{font-weight:700; color:var(--blue); font-size:1rem; margin-top:14px;}
+#home .sub{font-weight:700; color:var(--blue); font-size:1rem; margin-top:14px;
+  text-shadow:0 1px 3px rgba(255,246,233,.9);}
 #home .homebtns{display:flex; flex-direction:column; gap:12px; width:min(340px,86vw); margin-top:14px;}
 .home-matatu{width:min(360px,90vw); margin:6px 0 2px;}
-.credit{position:absolute; bottom:calc(10px + var(--safe-b)); font-size:.72rem; color:var(--ink-soft); opacity:.8;}
+/* sits on the darkened foot of the scenery, so it reads light */
+.credit{position:absolute; bottom:calc(10px + var(--safe-b)); font-size:.72rem;
+  color:rgba(255,255,255,.92); text-shadow:0 1px 3px rgba(0,0,0,.55);}
 
 /* ============================ TOP HUD ============================ */
 .hud{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px; }
@@ -109,8 +153,10 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
   display:flex; align-items:center; justify-content:center;
   font-weight:800; font-size:calc(var(--cell) * .5);
   color:var(--blue);
-  background:rgba(255,255,255,.32);
-  box-shadow:inset 0 0 0 2px rgba(29,53,87,.18);
+  /* opaque enough to hold its shape over a road photo — at .32 the empty
+     slots disappeared into the scenery and you couldn't read the word length */
+  background:rgba(255,255,255,.62);
+  box-shadow:inset 0 0 0 2px rgba(29,53,87,.22), 0 2px 6px rgba(0,0,0,.10);
 }
 .cell.filled{background:#fff; color:var(--blue); box-shadow:0 3px 0 var(--tile-sh); animation:cellPop .32s cubic-bezier(.2,1.4,.5,1);}
 .cell.hinted{background:#fff2cf; color:var(--orange-d);}
@@ -184,7 +230,7 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .bonuslist .miss{background:#e6d7bf; color:#a08a68;}
 
 /* ============================ JOURNEY MAP ============================ */
-#map{background:linear-gradient(180deg,#bfe6a8,#8fd07f 60%, #67b86a);}
+/* backdrop comes from #scene (the Kenya map) */
 .maphead{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 6px;}
 .maphead h2{flex:1; text-align:center; color:#fff; margin:0; -webkit-text-stroke:1.5px var(--blue); text-shadow:2px 2px 0 var(--green-d); font-size:1.5rem;}
 .maproad{flex:1; overflow-y:auto; overflow-x:hidden; padding:10px 0 40px; position:relative;}
@@ -202,22 +248,27 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .stop.current .medal{background:var(--yellow); border-color:var(--red); animation:pulse 1.2s infinite;}
 .stop.locked .medal{background:#cbb89a; color:#fff; border-color:#a58d68;}
 @keyframes pulse{0%,100%{box-shadow:0 4px 0 rgba(0,0,0,.25), 0 0 0 0 rgba(230,57,70,.5);}50%{box-shadow:0 4px 0 rgba(0,0,0,.25), 0 0 0 10px rgba(230,57,70,0);}}
-.stop .label{position:absolute; width:40%; padding:6px 10px; background:#fff; border-radius:12px; box-shadow:0 3px 0 rgba(0,0,0,.15);
+/* the map behind these is busy with its own place names, so the chips stay
+   fully opaque and carry a ring to cut themselves out of it */
+.stop .label{position:absolute; width:40%; padding:6px 10px; background:#fff; border-radius:12px;
+  box-shadow:0 3px 0 rgba(0,0,0,.22), 0 0 0 2px rgba(29,53,87,.22);
   font-weight:800; font-size:.9rem; color:var(--ink);}
 .stop.left .label{right:52%; text-align:right;}
 .stop.right .label{left:52%; text-align:left;}
-.stop.locked .label{opacity:.7; background:#efe6d4;}
+/* muted rather than translucent — fading these into the map made them vanish */
+.stop.locked .label{background:#e7dcc6; color:#6f5e42;}
+.stop.locked .label .tag{color:#8a7757;}
 .stop .label .tag{display:block; font-size:.65rem; font-weight:700; color:var(--ink-soft);}
 .stop.current .label{background:var(--yellow); }
 .stop .matatu-mini{position:absolute; left:50%; transform:translate(-50%,-118%); width:74px; z-index:5; filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));}
 .stop.playable{cursor:pointer;}
 
 /* ============================ LEVEL INTRO ============================ */
-#intro{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;
-  background:linear-gradient(180deg,#ffe8bf,#f7b267);}
-#intro .kicker{font-weight:800; color:var(--blue); letter-spacing:2px; text-transform:uppercase; font-size:.85rem;}
+#intro{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;}
+#intro .kicker{font-weight:800; color:var(--blue); letter-spacing:2px; text-transform:uppercase; font-size:.85rem;
+  text-shadow:0 1px 3px rgba(255,246,233,.95);}
 #intro h2{font-size:2.4rem; margin:.1em 0; color:var(--red); -webkit-text-stroke:1.5px var(--blue); text-shadow:3px 3px 0 rgba(0,0,0,.12);}
-#intro .depart{color:var(--ink-soft); font-weight:700;}
+#intro .depart{color:var(--ink); font-weight:800; text-shadow:0 1px 3px rgba(255,246,233,.95);}
 .intro-matatu{width:min(340px,86vw);}
 
 /* ============================ CELEBRATION ============================ */
@@ -236,8 +287,7 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .confetti-bit{position:absolute; width:11px; height:16px; top:-20px; will-change:transform;}
 
 /* ============================ ROUTE COMPLETE ============================ */
-#finish{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;
-  background:linear-gradient(180deg,#1D3557,#2b4a78);}
+#finish{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;}
 #finish h1{color:var(--yellow); font-size:2.2rem; -webkit-text-stroke:1.5px #12203a; text-shadow:3px 3px 0 rgba(0,0,0,.3); margin:.1em;}
 #finish .fcard{background:rgba(255,255,255,.95); border-radius:22px; padding:22px; width:min(400px,90vw); box-shadow:0 10px 0 rgba(0,0,0,.3);}
 #finish .stat{display:flex; justify-content:space-around; margin:12px 0;}
@@ -245,8 +295,19 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 #finish .stat span{display:block; font-size:.72rem; color:var(--ink-soft);}
 
 /* driving animation */
-#drive{position:fixed; inset:0; z-index:85; background:linear-gradient(180deg,#bfe6a8,#8fd07f); display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden;}
-#drive .road{position:absolute; left:0; right:0; bottom:0; height:34%; background:var(--road);}
+/* full-screen overlay, so it carries its own photo — the road *ahead*, set
+   inline by driveTo() from the kituo being driven to */
+/* flex-end + padding sits the matatu down on the road strip rather than
+   floating it in the middle of the scenery */
+#drive{position:fixed; inset:0; z-index:85; background:#8fd07f center/cover no-repeat;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  padding-bottom:19%; overflow:hidden;}
+#drive::before{content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(255,246,233,.58) 0%, rgba(255,246,233,.20) 45%, rgba(52,34,16,.40) 100%);}
+/* the inset shadow feathers the top edge so tarmac meets photo instead of
+   cutting a hard line across it */
+#drive .road{position:absolute; left:0; right:0; bottom:0; height:25%; background:var(--road);
+  box-shadow:0 -26px 34px -2px rgba(58,58,68,.92);}
 #drive .road::before{content:""; position:absolute; top:48%; left:0; right:0; height:6px; background:repeating-linear-gradient(90deg,var(--road-line) 0 40px, transparent 40px 80px); animation:dash .5s linear infinite;}
 @keyframes dash{to{background-position:-80px 0;}}
 #drive .drive-matatu{width:min(280px,72vw); position:relative; z-index:2; animation:bob .5s ease-in-out infinite;}
@@ -259,6 +320,11 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .pill.hard{background:var(--orange);} .pill.expert{background:var(--red);}
 </style>
 
+<div id="scene" aria-hidden="true" data-veil="open">
+  <div class="photo"></div>
+  <div class="photo"></div>
+  <div class="scrim"></div>
+</div>
 <div id="app"></div>
 <div id="toasts"></div>
 <div id="confetti"></div>
@@ -271,7 +337,7 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
    // STRINGS  — every visible phrase lives here. Proofread / tweak freely.
    ====================================================================== */
 const STRINGS = {
-  gameTitle: "Safari ya Matatu",
+  gameTitle: "Matatu ya Maneno",
   tagline: "Mchezo wa maneno — panda matatu, tafuta maneno!",
   // buttons / labels
   cheza: "Cheza",
@@ -338,7 +404,7 @@ const STRINGS = {
   manenoYaZiadaJumla: "Maneno ya ziada",
   shareBtn: "Shiriki safari",
   shareNakala: "Imenakiliwa! Bandika popote.",
-  shareText: (v, s, b) => `Nimemaliza Safari ya Matatu 🚐! Vituo: ${v}, Sarafu: ${s}, Maneno ya ziada: ${b}. Cheza pia:`,
+  shareText: (v, s, b) => `Nimemaliza Matatu ya Maneno 🚐! Vituo: ${v}, Sarafu: ${s}, Maneno ya ziada: ${b}. Cheza pia:`,
   chezaTena: "Cheza tena safari",
   // settings extras
   matatuYako: "Matatu yako:",
@@ -618,6 +684,55 @@ const appEl = document.getElementById("app");
 function el(html){ const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstElementChild; }
 function show(node){ appEl.innerHTML = ""; appEl.appendChild(node); }
 
+/* ======================================================================
+   ROAD SCENERY — which photo sits behind each screen
+   ====================================================================== */
+// Ordered Nairobi -> Mombasa to match the route in build.py, so the view out
+// of the matatu changes as the player works down the vituo: city gridlock,
+// then highway, then open country, then the coast.
+const ROAD_PHOTOS = [
+  "assets/road-01-nairobi-jam.jpg",
+  "assets/road-02-nairobi-highway.jpg",
+  "assets/road-03-rironi.jpg",
+  "assets/road-04-matatu-mzigo.jpg",
+  "assets/road-05-escarpment.jpg",
+  "assets/road-06-green-highway.jpg",
+  "assets/road-07-a109-sign.jpg",
+  "assets/road-08-mountain.jpg",
+  "assets/road-09-sgr-bridge.jpg",
+  "assets/road-10-mombasa-tusks.jpg",
+];
+const HOME_PHOTO   = "assets/road-08-mountain.jpg";      // open road for the title
+const FINISH_PHOTO = "assets/road-10-mombasa-tusks.jpg"; // Mombasa = end of the line
+const MAP_PHOTO    = "assets/kenya-map.jpg";
+
+// The stretch of road a given kituo is driving through. The photos are spread
+// across the whole route rather than cycled, so the scenery only ever moves
+// forward — cycling would drop you back into Nairobi traffic at Mtito Andei.
+function roadFor(levelId){
+  const i = Math.floor((levelId - 1) * ROAD_PHOTOS.length / PUZZLES.length);
+  return ROAD_PHOTOS[Math.max(0, Math.min(ROAD_PHOTOS.length - 1, i))];
+}
+
+const sceneEl = document.getElementById("scene");
+const scenePhotos = Array.from(sceneEl.querySelectorAll(".photo"));
+let sceneTop = 0;    // index of the layer currently on screen
+let sceneSrc = null; // what it holds, so re-rendering the same screen doesn't re-fade
+
+/* veil: "open" | "play" | "dusk" | "map" — see the #scene rules in the stylesheet */
+function setScene(src, veil){
+  sceneEl.dataset.veil = veil;
+  // the map is shown at 80% so it reads as a backdrop, not a foreground chart
+  sceneEl.style.setProperty("--photo-op", veil === "map" ? ".8" : "1");
+  if(src === sceneSrc) return;
+  sceneSrc = src;
+  sceneTop = 1 - sceneTop;
+  const next = scenePhotos[sceneTop];
+  next.style.backgroundImage = `url("${src}")`;
+  next.classList.add("on");
+  scenePhotos[1 - sceneTop].classList.remove("on");
+}
+
 function toast(msg, kind){
   const t = el(`<div class="toast ${kind||''}">${msg}</div>`);
   document.getElementById("toasts").appendChild(t);
@@ -653,6 +768,7 @@ function renderHome(){
   node.querySelector("#playBtn").onclick = ()=>{ actx(); startLevel(firstPlayableLevel()); };
   node.querySelector("#mapBtn").onclick = ()=> renderMap();
   node.querySelector("#setBtn").onclick = ()=> openSettings();
+  setScene(HOME_PHOTO, "open");
   show(node);
 }
 function firstPlayableLevel(){
@@ -697,6 +813,7 @@ function renderMap(){
     }
     route.appendChild(stop);
   });
+  setScene(MAP_PHOTO, "map");
   show(node);
   // scroll current stop into view
   requestAnimationFrame(()=>{
@@ -722,6 +839,7 @@ function startLevel(levelId){
     </div>`);
   node.querySelector("#go").onclick = ()=> renderGame(puzzle);
   node.querySelector("#toMap").onclick = renderMap;
+  setScene(roadFor(puzzle.levelId), "open");
   show(node);
 }
 
@@ -784,6 +902,7 @@ function renderGame(puzzle){
   const cbtn = node.querySelector("#centerBtn");
   cbtn.onclick = ()=> submitSelection();
 
+  setScene(roadFor(puzzle.levelId), "play");
   show(node);
   buildGrid();
   buildWheel();
@@ -1227,6 +1346,8 @@ function celebrate(puzzle, firstTime){
     if(isLast){ renderFinish(); }
     else { driveTo(puzzle.levelId + 1); }
   };
+  // arrival — lift the veil so you can see the kituo you just reached
+  setScene(roadFor(puzzle.levelId), "open");
   show(node);
 }
 
@@ -1239,6 +1360,8 @@ function driveTo(nextId){
       <div class="drive-matatu">${matatuSVG(state.matatuName)}</div>
       <div class="road"></div>
     </div>`);
+  // preview the road ahead while the matatu drives onto it
+  overlay.style.backgroundImage = `url("${roadFor(nextId)}")`;
   document.body.appendChild(overlay);
   const car = overlay.querySelector(".drive-matatu");
   // slide across then settle
@@ -1275,6 +1398,7 @@ function renderFinish(){
   node.querySelector("#share").onclick = ()=> shareSafari(cleared, bonusTotal);
   node.querySelector("#fMap").onclick = renderMap;
   node.querySelector("#fReset").onclick = ()=> confirmReset();
+  setScene(FINISH_PHOTO, "dusk");
   launchConfetti();
   SFX.hoot();
   show(node);
