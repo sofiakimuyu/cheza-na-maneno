@@ -109,10 +109,14 @@
 <script src="vendor/supabase.js"></script>
 <script src="supabase-config.js"></script>
 <script>
-/* The page itself is public (it ships with the game on GitHub Pages), but the
-   DATA is not: every dash_* function re-checks is_admin() server-side, so a
-   non-admin session gets "not authorised" no matter what it sends. Access is
-   controlled in the database, never in this file. */
+/* This page is NOT deployed -- it lives on the `private-dashboard` branch and
+   is gitignored on main, so GitHub Pages never serves it. See
+   DASHBOARD-README.md.
+
+   That is defence in depth, not the access control itself: every dash_*
+   function re-checks is_admin() server-side, so even a hosted copy would
+   return "not authorised" to a non-admin. Access is controlled in the
+   database, never in this file. */
 const CFG = window.SUPABASE_CONFIG || {};
 const $ = (id)=> document.getElementById(id);
 const esc = (s)=> String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
