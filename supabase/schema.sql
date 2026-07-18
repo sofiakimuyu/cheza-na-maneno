@@ -1,5 +1,5 @@
 -- ============================================================================
--- Safari ya Matatu — Supabase schema
+-- Matatu ya Maneno — Supabase schema
 --
 -- Run this once in the Supabase SQL editor (Dashboard -> SQL Editor -> New query).
 -- Safe to re-run: everything is idempotent.

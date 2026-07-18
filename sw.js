@@ -1,7 +1,7 @@
-/* Safari ya Matatu — service worker.
+/* Matatu ya Maneno — service worker.
    Caches every asset on install so the game installs as a PWA and works
    fully offline. Bump CACHE when you change any file. */
-const CACHE = "safari-ya-matatu-v3";
+const CACHE = "matatu-ya-maneno-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -12,6 +12,17 @@ const ASSETS = [
   "./manifest.json",
   "./icon.svg",
   "./icon-maskable.svg",
+  "./assets/kenya-map.jpg",
+  "./assets/road-01-nairobi-jam.jpg",
+  "./assets/road-02-nairobi-highway.jpg",
+  "./assets/road-03-rironi.jpg",
+  "./assets/road-04-matatu-mzigo.jpg",
+  "./assets/road-05-escarpment.jpg",
+  "./assets/road-06-green-highway.jpg",
+  "./assets/road-07-a109-sign.jpg",
+  "./assets/road-08-mountain.jpg",
+  "./assets/road-09-sgr-bridge.jpg",
+  "./assets/road-10-mombasa-tusks.jpg",
 ];
 
 self.addEventListener("install", (e)=>{

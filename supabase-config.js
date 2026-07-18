@@ -1,4 +1,4 @@
-/* Safari ya Matatu — Supabase connection.
+/* Matatu ya Maneno — Supabase connection.
  *
  * Fill in the two values below from:
  *   Supabase Dashboard -> Project Settings -> API

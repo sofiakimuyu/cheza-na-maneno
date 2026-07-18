@@ -1,4 +1,4 @@
-/* Safari ya Matatu — cloud sync (scoreboard + telemetry).
+/* Matatu ya Maneno — cloud sync (scoreboard + telemetry).
  *
  * DESIGN RULE: this file must never be able to break the game.
  * The game is offline-first. Every call here is best-effort and swallows its
