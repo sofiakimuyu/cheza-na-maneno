@@ -1,7 +1,7 @@
 /* Matatu ya Maneno — service worker.
    Caches every asset on install so the game installs as a PWA and works
    fully offline. Bump CACHE when you change any file. */
-const CACHE = "matatu-ya-maneno-v3";
+const CACHE = "matatu-ya-maneno-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,6 +16,7 @@ const ASSETS = [
   "./icon.svg",
   "./icon-maskable.svg",
   "./assets/kenya-map.jpg",
+  "./assets/maneno-matatu.png",
   "./assets/road-01-nairobi-jam.jpg",
   "./assets/road-02-nairobi-highway.jpg",
   "./assets/road-03-rironi.jpg",

@@ -332,7 +332,11 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
   box-shadow:0 -26px 34px -2px rgba(58,58,68,.92);}
 #drive .road::before{content:""; position:absolute; top:48%; left:0; right:0; height:6px; background:repeating-linear-gradient(90deg,var(--road-line) 0 40px, transparent 40px 80px); animation:dash .5s linear infinite;}
 @keyframes dash{to{background-position:-80px 0;}}
-#drive .drive-matatu{width:min(280px,72vw); position:relative; z-index:2; animation:bob .5s ease-in-out infinite;}
+/* The wrapper keeps the idle bob; the <img> inside carries the drive-away
+   transform from JS. Separating them stops the two animations fighting over
+   the same `transform`. */
+#drive .drive-matatu{width:min(300px,78vw); position:relative; z-index:2; animation:bob .5s ease-in-out infinite;}
+#drive .drive-matatu img{width:100%; display:block; filter:drop-shadow(0 10px 10px rgba(0,0,0,.38));}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-6px) rotate(1deg);}}
 #drive .drivelabel{position:absolute; top:16%; font-weight:800; color:var(--blue); font-size:1.3rem; text-align:center; width:90%;}
 
@@ -904,6 +908,10 @@ const ROAD_PHOTOS = [
 const HOME_PHOTO   = "assets/road-08-mountain.jpg";      // open road for the title
 const FINISH_PHOTO = "assets/road-10-mombasa-tusks.jpg"; // Mombasa = end of the line
 const MAP_PHOTO    = "assets/kenya-map.jpg";
+// The Maneno SACCO matatu, rear three-quarter — used for the drive between
+// levels. The painted SVG matatu still carries the map, home and arrival
+// screens, where a side view is what reads.
+const DRIVE_MATATU = "assets/maneno-matatu.png";
 
 // The stretch of road a given kituo is driving through. The photos are spread
 // across the whole route rather than cycled, so the scenery only ever moves
@@ -1158,7 +1166,9 @@ function renderMap(){
         <div class="footsub">${STRINGS.nauli} ${to.fareFromPrevious} · ${legDistanceKm(SAVE.journey.stopIndex+1)} km</div>
         <button class="btn red" id="goLevel">🚐 ${STRINGS.twende}</button>
       </div>`));
-    foot.querySelector("#goLevel").onclick = ()=>{ actx(); startLevel(firstPlayableLevel()); };
+    // Drive out of the map too, so every level is entered from the road
+    // rather than cutting straight to the grid.
+    foot.querySelector("#goLevel").onclick = ()=>{ actx(); driveToNextLevel(); };
   } else {
     foot.appendChild(el(`
       <div class="footcard">
@@ -1788,15 +1798,19 @@ function driveToNextLevel(){
   const overlay = el(`
     <div id="drive">
       <div class="drivelabel">${STRINGS.matatuInaendesha(to ? to.name : "")}</div>
-      <div class="drive-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="drive-matatu"><img src="${DRIVE_MATATU}" alt="" decoding="async"></div>
       <div class="road"></div>
     </div>`);
-  // preview the road ahead while the matatu drives onto it
-  overlay.style.backgroundImage = `url("${roadFor(nextId)}")`;
+  // Preview the road ahead while the matatu drives onto it. Keyed to the stop
+  // being driven toward — the journey layer counts stops, not levels.
+  overlay.style.backgroundImage = `url("${roadForStop(SAVE.journey.stopIndex + 1)}")`;
   document.body.appendChild(overlay);
-  overlay.querySelector(".drive-matatu").animate([
-    {transform:"translateX(-120vw)"},
-    {transform:"translateX(0)"},
+  // The artwork is a rear three-quarter view, so the matatu should pull into
+  // frame and then recede up the road rather than slide across it.
+  overlay.querySelector(".drive-matatu img").animate([
+    {transform:"translateY(16%) scale(1.20)", opacity:0},
+    {transform:"translateY(0) scale(1)",      opacity:1, offset:.34},
+    {transform:"translateY(-12%) scale(.80)", opacity:1},
   ], {duration:1400, easing:"cubic-bezier(.3,.7,.4,1)", fill:"forwards"});
   setTimeout(()=>{ overlay.remove(); startLevel(firstPlayableLevel()); }, 1550);
 }
