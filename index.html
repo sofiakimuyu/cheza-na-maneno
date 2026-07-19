@@ -134,7 +134,7 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 /* The photo matatu has no shadow baked in, so wherever it stands in for the
    painted SVG it needs one to sit on the road instead of floating. The
    container keeps its own width; the photo just fills it. */
-.home-matatu img, .intro-matatu img, .arrive-matatu img{
+.home-matatu img, .arrive-matatu img{
   width:100%; display:block; filter:drop-shadow(0 10px 10px rgba(0,0,0,.32));}
 /* sits on the darkened foot of the scenery, so it reads light */
 .credit{position:absolute; bottom:calc(10px + var(--safe-b)); font-size:.72rem;
@@ -147,6 +147,15 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .nameinput:focus{border-color:var(--blue); box-shadow:0 0 0 4px rgba(0,0,0,.08);}
 .nameinput::placeholder{color:var(--ink-soft); opacity:.6; font-weight:700;}
 .namehint{min-height:1.1em; margin-top:8px; font-size:.78rem; font-weight:700; color:var(--red);}
+/* sign-in: country picker stacked over the number, so the long country
+   names have the full width and the two read as one field */
+.phonerow{display:flex; flex-direction:column; align-items:center; gap:8px;}
+.phonerow .nameinput{margin-top:0;}
+.ccselect{width:min(340px,86vw); margin-top:16px; padding:14px 16px; border-radius:14px;
+  border:3px solid var(--ink); background:#fff; color:var(--ink); font-family:inherit;
+  font-weight:800; font-size:1rem; text-align:center; outline:none; appearance:none;
+  text-align-last:center; cursor:pointer;}
+.ccselect:focus{border-color:var(--blue); box-shadow:0 0 0 4px rgba(0,0,0,.08);}
 
 /* ============================ SCOREBOARD ============================ */
 #board .boardlist{width:min(420px,92vw); margin-top:10px; display:flex; flex-direction:column; gap:8px;
@@ -330,14 +339,6 @@ body:has(.overlay) #coinHud{opacity:.35;}
 .stop .matatu-mini{position:absolute; left:50%; transform:translate(-50%,-118%); width:74px; z-index:5; filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));}
 .stop.playable{cursor:pointer;}
 
-/* ============================ LEVEL INTRO ============================ */
-#intro{align-items:center; justify-content:center; text-align:center; padding:24px; gap:8px;}
-#intro .kicker{font-weight:800; color:var(--blue); letter-spacing:2px; text-transform:uppercase; font-size:.85rem;
-  text-shadow:0 1px 3px rgba(255,246,233,.95);}
-#intro h2{font-size:2.4rem; margin:.1em 0; color:var(--red); -webkit-text-stroke:1.5px var(--blue); text-shadow:3px 3px 0 rgba(0,0,0,.12);}
-#intro .depart{color:var(--ink); font-weight:800; text-shadow:0 1px 3px rgba(255,246,233,.95);}
-.intro-matatu{width:min(340px,86vw);}
-
 /* ============================ CELEBRATION ============================ */
 #celebrate{align-items:center; justify-content:center; text-align:center; padding:24px; gap:6px;}
 .celebrate-card{background:var(--cream); border-radius:26px; padding:26px 22px; width:min(420px,92vw);
@@ -435,8 +436,14 @@ body:has(.overlay) #coinHud{opacity:.35;}
   width:min(420px,94vw); box-shadow:0 6px 0 rgba(0,0,0,.22);}
 .footline{font-weight:800; color:var(--blue); font-size:1rem;}
 .footsub{font-size:.75rem; font-weight:700; color:var(--ink-soft); margin:2px 0 8px;}
+/* the roll-in cutscene: a caption where the button would be, so the footer
+   does not collapse and the map stops jumping between the two modes */
+.footline.rolling{background:var(--cream); border-radius:18px; padding:12px 16px;
+  width:min(420px,94vw); text-align:center; box-shadow:0 6px 0 rgba(0,0,0,.22);}
+.icon-btn.ghosted{visibility:hidden;}
 
 /* ---- arrival ---- */
+.farenote{font-weight:800; color:var(--ink-soft); margin:6px 0 10px;}
 .arrival{align-items:center; justify-content:center; padding:16px; overflow-y:auto;}
 .arrival.minor{background:linear-gradient(180deg,#ffe8bf,#f7b267);}
 .arrival.major{background:linear-gradient(180deg,#1D3557,#2b4a78);}
@@ -547,7 +554,6 @@ const STRINGS = {
   cheza: "Cheza",
   anza: "Anza",
   endelea: "Endelea",
-  kifuatacho: "Kifuatacho",
   ramani: "Ramani ya Safari",
   ramaniShort: "Ramani",
   mipangilio: "Mipangilio",
@@ -557,7 +563,6 @@ const STRINGS = {
   kituo: "Kituo",
   vituo: "Vituo",
   safari: "Safari",
-  kiwango: "Kiwango",
   hongera: "Hongera",
   umefika: "Umefika",
   twende: "Twende!",
@@ -569,8 +574,6 @@ const STRINGS = {
   sitaki: "La, ghairi",
   manenoZiada: "Maneno ya Ziada",
   // wheel / gameplay
-  kituoKijacho: "Kituo kijacho:",
-  matatuTayari: "Matatu iko tayari kuondoka…",
   thibitisha: "Thibitisha",
   bonusJarTitle: "Maneno ya Ziada Uliyopata",
   bonusHakuna: "Hujapata neno la ziada bado. Yatafute!",
@@ -590,6 +593,9 @@ const STRINGS = {
   matatuInaendesha: (k) => `Matatu inaelekea ${k}…`,
   // map
   mapTitle: "Ramani ya Safari",
+  // arrival — the fare is narrated here, on the player's press
+  lipaNauli: "Lipa nauli, tuendelee",
+  nauliNi: (n) => `Nauli: ${n} sarafu`,
   // finish
   jumlaSarafu: "Sarafu",
   shareBtn: "Shiriki safari",
@@ -597,13 +603,13 @@ const STRINGS = {
   shareText: (kituo, sarafu, vidokezo) => `Nimefika ${kituo} kwenye Matatu ya Maneno 🚐! Sarafu: ${sarafu}, Vidokezo: ${vidokezo}. Cheza pia:`,
   chezaTena: "Cheza tena safari",
   // settings extras
-  matatuYako: "Matatu yako:",
   toleo: "Toleo 1.0",
   // onboarding / phone sign-in
   simuUliza: "Nambari yako ya simu?",
   simuMaelezo: "Nambari moja = akaunti moja. Ukirudi, safari yako inaendelea.",
-  simuKishika: "07XX XXX XXX",
-  simuSiSahihi: "Nambari si sahihi. Jaribu tena, mfano 0712 345 678.",
+  simuKishika: "Nambari ya simu",
+  simuSiSahihi: "Nambari si sahihi. Chagua nchi yako kisha andika nambari.",
+  nchiYako: "Nchi yako",
   simuInatafuta: "Inatafuta akaunti yako…",
   simuNjeMtandao: "Huna mtandao — safari yako itahifadhiwa hapa kwa sasa.",
   simuYako: "Simu yako:",
@@ -638,7 +644,6 @@ const STRINGS = {
   sarafuZilizobaki: "Sarafu zilizobaki",
   umewasili: "Umewasili",
   kituoKikuu: "Kituo Kikuu",                // major stop
-  endeleaSafari: "Endelea na safari",
   ngaziKadhaa: (n, k) => `Ngazi ${n} zaidi hadi ${k}`,
   ngaziMojaHadi: (k) => `Ngazi 1 zaidi hadi ${k}`,
   legOf: (a, b) => `${a} → ${b}`,
@@ -659,6 +664,70 @@ const STRINGS = {
   // scoreboard
   marudioJumla: "Marudio",
 };
+
+/* Countries for the sign-in picker: [ISO-3166 alpha-2, name, calling code].
+   The flag is derived from the ISO code rather than pasted in, so the list
+   stays readable and cannot drift out of sync with itself.
+
+   The game is set on the A109 and most players will be in Kenya, but that
+   is a reason to make Kenya easy to pick — not a reason to assume it. The
+   selected code is what turns a local number into E.164; see
+   Cloud.normalisePhone(). */
+const COUNTRIES = [
+  ["KE","Kenya","254"],["TZ","Tanzania","255"],["UG","Uganda","256"],
+  ["RW","Rwanda","250"],["BI","Burundi","257"],["SS","South Sudan","211"],
+  ["ET","Ethiopia","251"],["SO","Somalia","252"],["DJ","Djibouti","253"],
+  ["ZM","Zambia","260"],["MW","Malawi","265"],["MZ","Mozambique","258"],
+  ["ZW","Zimbabwe","263"],["BW","Botswana","267"],["NA","Namibia","264"],
+  ["ZA","South Africa","27"],["NG","Nigeria","234"],["GH","Ghana","233"],
+  ["CI","Côte d'Ivoire","225"],["SN","Senegal","221"],["CM","Cameroon","237"],
+  ["CD","DR Congo","243"],["AO","Angola","244"],["EG","Egypt","20"],
+  ["MA","Morocco","212"],["DZ","Algeria","213"],["TN","Tunisia","216"],
+  ["SD","Sudan","249"],["MU","Mauritius","230"],["SC","Seychelles","248"],
+  ["GB","United Kingdom","44"],["IE","Ireland","353"],["US","United States","1"],
+  ["CA","Canada","1"],["MX","Mexico","52"],["BR","Brazil","55"],
+  ["AR","Argentina","54"],["FR","France","33"],["DE","Germany","49"],
+  ["NL","Netherlands","31"],["BE","Belgium","32"],["ES","Spain","34"],
+  ["PT","Portugal","351"],["IT","Italy","39"],["CH","Switzerland","41"],
+  ["AT","Austria","43"],["SE","Sweden","46"],["NO","Norway","47"],
+  ["DK","Denmark","45"],["FI","Finland","358"],["PL","Poland","48"],
+  ["TR","Turkey","90"],["RU","Russia","7"],["UA","Ukraine","380"],
+  ["AE","United Arab Emirates","971"],["SA","Saudi Arabia","966"],
+  ["QA","Qatar","974"],["KW","Kuwait","965"],["OM","Oman","968"],
+  ["IL","Israel","972"],["IN","India","91"],["PK","Pakistan","92"],
+  ["BD","Bangladesh","880"],["LK","Sri Lanka","94"],["CN","China","86"],
+  ["JP","Japan","81"],["KR","South Korea","82"],["HK","Hong Kong","852"],
+  ["SG","Singapore","65"],["MY","Malaysia","60"],["ID","Indonesia","62"],
+  ["TH","Thailand","66"],["VN","Vietnam","84"],["PH","Philippines","63"],
+  ["AU","Australia","61"],["NZ","New Zealand","64"],
+].sort((a, b) => a[1].localeCompare(b[1]));
+
+// 🇰🇪 from "KE" — regional indicator letters are A-Z offset into U+1F1E6.
+function flagOf(iso){
+  return String.fromCodePoint(...[...iso].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+}
+
+Cloud.setCallingCodes(COUNTRIES.map(c => c[2]));
+
+// Which country the picker opens on. The player's own locale is a far better
+// guess than our favourite country, and it is only a default — the whole
+// point of the picker is that they can change it.
+const CC_PREF_KEY = "matatu_cc";
+function defaultCountry(){
+  try{
+    const saved = localStorage.getItem(CC_PREF_KEY);
+    if(saved && COUNTRIES.some(c => c[0] === saved)) return saved;
+  }catch(e){ /* storage blocked — fall through to locale */ }
+  const langs = navigator.languages || [navigator.language || ""];
+  for(const tag of langs){
+    const region = String(tag).split("-")[1];
+    if(region && COUNTRIES.some(c => c[0] === region.toUpperCase())) return region.toUpperCase();
+  }
+  return "KE";
+}
+function rememberCountry(iso){
+  try{ localStorage.setItem(CC_PREF_KEY, iso); }catch(e){ /* not worth failing over */ }
+}
 
 // Matatu slogans / names — one picked (and kept) per playthrough.
 const MATATU_NAMES = ["Subira","Mungu Akipenda","Blessed","Nairobi Express","Detroit","Kaka",
@@ -967,7 +1036,8 @@ function matatuPhoto(){
   return `<img src="${MATATU_PHOTO}" alt="" decoding="async">`;
 }
 /* Board / map / settings, stacked in the corner opposite the purse. Shared by
-   the home and level-intro screens, so the way out is always in one place.
+   the home, game and between-round screens, so the way out — and the map —
+   is always in one place, whichever screen you are on.
    Call wireRail() on the rendered node to hook the buttons up. */
 function railHTML(shape){
   return `<div class="rail ${shape || "corner"}">
@@ -1080,15 +1150,39 @@ function cleanName(raw){
   return String(raw||"").replace(/\s+/g," ").trim().slice(0,16);
 }
 
+// Split a stored E.164 number back into [country, national part] so the
+// screen can be re-shown (after a reset, say) with the player's own number
+// still in it rather than an empty box.
+function splitStoredPhone(e164){
+  const digits = String(e164 || "").replace(/[^0-9]/g, "");
+  if(!digits) return null;
+  // Longest calling code first, so +1868 beats +1.
+  const match = COUNTRIES
+    .filter(c => digits.startsWith(c[2]))
+    .sort((a, b) => b[2].length - a[2].length)[0];
+  if(!match) return null;
+  return [match[0], digits.slice(match[2].length)];
+}
+
 function renderPhoneSignIn(){
+  const stored = splitStoredPhone(state.phone);
+  const startCountry = stored ? stored[0] : defaultCountry();
   const node = el(`
     <div class="screen" id="home">
       <div class="titlewrap"><h1>${STRINGS.karibu}</h1></div>
       <div class="home-matatu">${matatuPhoto()}</div>
       <div class="sub">${STRINGS.simuUliza}</div>
-      <input class="nameinput" id="phoneIn" type="tel" inputmode="tel" maxlength="20"
-             autocomplete="tel" spellcheck="false"
-             placeholder="${STRINGS.simuKishika}" value="${esc(state.phone || "")}">
+      <div class="phonerow">
+        <select class="ccselect" id="ccIn" aria-label="${STRINGS.nchiYako}">
+          ${COUNTRIES.map(([iso, name, cc]) => `
+            <option value="${iso}" data-cc="${cc}" ${iso === startCountry ? "selected" : ""}>
+              ${flagOf(iso)} ${esc(name)} +${cc}
+            </option>`).join("")}
+        </select>
+        <input class="nameinput" id="phoneIn" type="tel" inputmode="tel" maxlength="20"
+               autocomplete="tel" spellcheck="false"
+               placeholder="${STRINGS.simuKishika}" value="${stored ? esc(stored[1]) : ""}">
+      </div>
       <div class="namehint" id="phoneHint"></div>
       <div class="homebtns">
         <button class="btn red" id="phoneBtn">🚐 ${STRINGS.endelea}</button>
@@ -1098,11 +1192,14 @@ function renderPhoneSignIn(){
   const input = node.querySelector("#phoneIn");
   const hint  = node.querySelector("#phoneHint");
   const btn   = node.querySelector("#phoneBtn");
+  const ccSel = node.querySelector("#ccIn");
   let busy = false;
+
+  const selectedCC = ()=> ccSel.selectedOptions[0].dataset.cc;
 
   const submit = async ()=>{
     if(busy) return;
-    const phone = Cloud.normalisePhone(input.value);
+    const phone = Cloud.normalisePhone(input.value, selectedCC());
     if(!phone){
       hint.style.color = "";
       hint.textContent = STRINGS.simuSiSahihi;
@@ -1110,6 +1207,7 @@ function renderPhoneSignIn(){
       return;
     }
     actx();
+    rememberCountry(ccSel.value);   // so a returning player is not re-guessed
     busy = true;
     btn.disabled = true;
     hint.style.color = "var(--ink-soft)";
@@ -1215,11 +1313,16 @@ function renderHome(){
       <div class="homebtns">
         <button class="btn red" id="playBtn">🚐 ${anyProgress ? STRINGS.endelea : STRINGS.anza}</button>
       </div>
-      <div class="credit">${STRINGS.matatuYako} “${state.matatuName}” · ${STRINGS.toleo}</div>
+      <div class="credit">${STRINGS.toleo}</div>
     </div>`);
-  // The route map is the hub — play always goes there first, so the player
-  // sees where the matatu is (and any traffic) before boarding.
-  node.querySelector("#playBtn").onclick = ()=>{ actx(); renderMap(); };
+  // First run: show the route once, so the player sees the road they are
+  // about to drive and where it ends. After that the map has nothing new to
+  // say, so Anza departs immediately — it stays a tap away on the rail.
+  node.querySelector("#playBtn").onclick = ()=>{
+    actx();
+    if(anyProgress) driveToNextLevel();
+    else renderMap();
+  };
   wireRail(node);
   setScene(HOME_PHOTO, "open");
   show(node);
@@ -1289,21 +1392,30 @@ function legLabel(){
   };
 }
 
-// The route map. This is the hub: a vertical stretch of the A109 with the
-// matatu sitting at a fractional position along the leg it is driving, so
-// "one of two levels done" is visible without opening anything.
-function renderMap(){
+// The route map. A vertical stretch of the A109 with the matatu sitting at a
+// fractional position along the leg it is driving, so "one of two levels done"
+// is visible at a glance.
+//
+// Two modes:
+//   * hub (no opts) — reachable from the rail, footer offers the next level;
+//   * arrival (opts.rollFrom / opts.onArrive) — the matatu drives the last
+//     stretch into the stop it just earned and the screen hands off on its
+//     own. No footer, no button: the player pressed nothing to get here and
+//     presses nothing to leave.
+function renderMap(opts){
+  opts = opts || {};
+  const rolling = typeof opts.rollFrom === "number";
   const node = el(`
     <div class="screen" id="map">
       <div class="maphead">
-        <button class="icon-btn" id="mHome">🏠</button>
+        ${rolling ? `<span class="icon-btn ghosted"></span>` : `<button class="icon-btn" id="mHome">🏠</button>`}
         <h2>${STRINGS.mapTitle}</h2>
         ${coinSlot()}
       </div>
       <div class="maproad"><div class="route" id="route"></div></div>
       <div class="mapfoot" id="mapFoot"></div>
     </div>`);
-  node.querySelector("#mHome").onclick = renderHome;
+  if(!rolling) node.querySelector("#mHome").onclick = renderHome;
   const route = node.querySelector("#route");
   const here = SAVE.journey.stopIndex;
 
@@ -1330,22 +1442,35 @@ function renderMap(){
     if(!next) return;
     const travelling = i === here;
     const pct = travelling ? Math.round(legProgress() * 100) : 0;
+    // While rolling, the matatu is painted where it stood before this level
+    // and animated to `pct` below — otherwise it would simply appear at the
+    // stop and there would be nothing to watch.
+    const startPct = travelling && rolling ? Math.round(opts.rollFrom * 100) : pct;
     const seg = el(`
       <div class="kseg ${i < here ? "done" : ""} ${travelling ? "active" : ""}">
         <div class="ksegline"></div>
         ${travelling ? `
-          <div class="ksegfill" style="height:${pct}%"></div>
-          <div class="kmatatu" style="top:${pct}%">
+          <div class="ksegfill" style="height:${startPct}%"></div>
+          <div class="kmatatu" style="top:${startPct}%">
             ${matatuSVG(state.matatuName, null, {people:false})}
           </div>` : ``}
       </div>`);
     route.appendChild(seg);
+    if(travelling && rolling && startPct !== pct){
+      const fill = seg.querySelector(".ksegfill");
+      const van  = seg.querySelector(".kmatatu");
+      fill.style.transition = van.style.transition = "height .9s ease-in-out, top .9s ease-in-out";
+      requestAnimationFrame(()=>{ fill.style.height = pct + "%"; van.style.top = pct + "%"; });
+    }
   });
 
-  // Footer: what the next level buys you, or the end-of-act button.
+  // Footer: what the next level buys you, or the end-of-act button. An
+  // arrival roll has no footer — it is a cutscene, not a decision.
   const foot = node.querySelector("#mapFoot");
   const to = nextStop();
-  if(to && outOfWords()){
+  if(rolling){
+    foot.appendChild(el(`<div class="footline rolling">${STRINGS.matatuInaendesha(to ? to.name : "")}</div>`));
+  } else if(to && outOfWords()){
     // Road ahead, but no words left to earn the fare with.
     foot.appendChild(el(`
       <div class="footcard jammed">
@@ -1379,29 +1504,21 @@ function renderMap(){
     const cur = route.querySelector(".kstop.current");
     if(cur) cur.scrollIntoView({block:"center"});
   });
+  // Let the roll finish and land, then hand off without being asked.
+  if(rolling && opts.onArrive) setTimeout(opts.onArrive, 1250);
 }
 
 /* ======================================================================
-   LEVEL INTRO ("Kituo kijacho")
+   LEVEL ENTRY
+
+   The drive animation is the intro. Everything the old standalone intro
+   screen announced — the destination, which level of the leg this is — is
+   already in the game HUD, so there is nothing left to press through.
    ====================================================================== */
 function startLevel(levelId){
   const puzzle = PUZZLES.find(p=>p.levelId===levelId) || PUZZLES[0];
   cloudTrack("level_start", puzzle.levelId);
-  const node = el(`
-    <div class="screen" id="intro">
-      ${railHTML()}
-      <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · <span class="pill ${puzzle.difficulty}">${STRINGS.diff[puzzle.difficulty]||puzzle.difficulty}</span></div>
-      <div class="kicker">${nextStop() ? STRINGS.kituoKijacho : STRINGS.safari}</div>
-      <h2>${nextStop() ? nextStop().name : currentStop().name}</h2>
-      <div class="kicker">${legLabel().kicker}</div>
-      <div class="intro-matatu">${matatuPhoto()}</div>
-      <div class="depart">${STRINGS.matatuTayari}</div>
-      <button class="btn red" id="go">${STRINGS.twende}</button>
-    </div>`);
-  node.querySelector("#go").onclick = ()=> renderGame(puzzle);
-  wireRail(node);
-  setScene(roadFor(puzzle.levelId), "open");
-  show(node);
+  renderGame(puzzle);   // sets its own scene, veiled for play
 }
 
 /* ======================================================================
@@ -1778,6 +1895,34 @@ function refreshCoinHud(pop){
   document.querySelectorAll(".coinslot span:last-child").forEach(s => s.textContent = bal);
   if(pop && box){ box.classList.remove("coin-pop"); void box.offsetWidth; box.classList.add("coin-pop"); }
 }
+/* Count the purse from wherever it is now down (or up) to `target`, then
+   hand control back to the ledger. Used by the arrival screen to make the
+   fare visible: the ledger entry was already written on departure, but the
+   player should watch the coins leave when they press the button, not find
+   out after the fact. Display only — it never moves a coin. */
+function countCoinHudTo(target, ms, done){
+  const num = document.getElementById("coinNum");
+  const from = num ? Number(num.textContent) || 0 : target;
+  const t0 = performance.now();
+  const step = (now)=>{
+    const k = Math.min(1, (now - t0) / ms);
+    const v = Math.round(from + (target - from) * k);
+    if(num) num.textContent = v;
+    document.querySelectorAll(".coinslot span:last-child").forEach(s => s.textContent = v);
+    if(k < 1) requestAnimationFrame(step);
+    else if(done) done();
+  };
+  requestAnimationFrame(step);
+}
+
+// Paint a value the ledger does not agree with yet. Only the arrival screen
+// uses this, to hold the pre-fare balance on screen until the fare is paid.
+function setCoinHudValue(n){
+  const num = document.getElementById("coinNum");
+  if(num) num.textContent = n;
+  document.querySelectorAll(".coinslot span:last-child").forEach(s => s.textContent = n);
+}
+
 // The purse is meaningless before the player has a name, and the onboarding
 // screen is the one place it would be noise rather than information.
 function setCoinHudVisible(on){
@@ -1904,14 +2049,16 @@ function checkComplete(){
 
   // Only a first clear pays out and moves the matatu. A replay is recorded
   // (it is a scoreboard tiebreak) but changes nothing else.
-  let departure = null;
+  // Where the matatu stood before this level counted, so the map can drive
+  // the last stretch rather than teleporting.
+  const pctBefore = legProgress();
+  let legComplete = false;
   if(firstTime){
     // firstTime implies G.isReplay was false, so awardCoins will pay out.
     awardCoins(ECONOMY.LEVEL_COMPLETION_BONUS, "level_reward",
                {levelId: G.puzzle.levelId, completion: true});
     const {readyToDepart} = creditLevelToLeg();
-    // The fare comes off here, on departure — not when the level ended.
-    if(readyToDepart) departure = departToNextStop();
+    legComplete = readyToDepart;
   } else {
     noteReplay();
   }
@@ -1920,7 +2067,9 @@ function checkComplete(){
   cloudTrack("level_complete", G.puzzle.levelId);
   cloudSync();
   setTimeout(()=>{
-    if(departure) renderArrival(departure);
+    // Finishing the leg skips the mid-leg congrats entirely: the map takes
+    // over, drives in, and the arrival screen is the celebration.
+    if(legComplete) rollIntoNextStop(pctBefore);
     else celebrate(G.puzzle, firstTime);
   }, 400);
 }
@@ -1948,7 +2097,7 @@ function celebrate(puzzle, firstTime){
         ${to ? `<div class="depart" style="color:var(--green-d);font-weight:800">
             ${left === 1 ? STRINGS.ngaziMojaHadi(to.name) : STRINGS.ngaziKadhaa(left, to.name)}
           </div>` : ``}
-        <button class="btn red" id="next">🚐 ${STRINGS.kifuatacho}</button>
+        <button class="btn red" id="next">🚐 ${STRINGS.twende}</button>
       </div>
     </div>`);
   node.querySelector("#next").onclick = ()=> driveToNextLevel();
@@ -1956,6 +2105,10 @@ function celebrate(puzzle, firstTime){
   // lift the veil so you can see the road you just travelled
   setScene(roadFor(puzzle.levelId), "open");
   show(node);
+  // A smaller burst than an arrival gets: clearing a level is worth
+  // celebrating, but reaching a stop should still feel like the bigger one.
+  // A replay earns nothing, so it does not get the party either.
+  if(firstTime) launchConfetti(34);
 }
 
 /* ======================================================================
@@ -1996,6 +2149,8 @@ function renderTraffic(){
 
 /* Driving transition, then straight into the next level. */
 function driveToNextLevel(){
+  // End of the route — there is nowhere left to drive to.
+  if(!nextStop()){ renderJourneyEnd(); return; }
   // Out of puzzles — the matatu drives into the jam instead.
   if(outOfWords()){ renderTraffic(); return; }
   const to = nextStop();
@@ -2019,12 +2174,34 @@ function driveToNextLevel(){
   setTimeout(()=>{ overlay.remove(); startLevel(firstPlayableLevel()); }, 1550);
 }
 
+/* The last level of a leg is finished. Show the map, drive the matatu the
+   remaining stretch into the stop, and hand straight to the arrival screen —
+   the player presses nothing between the grid and the confetti. */
+function rollIntoNextStop(pctBefore){
+  window.removeEventListener("resize", onResize);
+  document.onkeydown = null;
+  SFX.correct();
+  renderMap({
+    rollFrom: pctBefore,
+    onArrive: ()=>{
+      // Only now does the matatu actually leave the stop it was at: the
+      // fare is posted and the journey position advances.
+      const receipt = departToNextStop();
+      if(receipt) renderArrival(receipt);
+      else renderJourneyEnd();
+    },
+  });
+}
+
 /* ======================================================================
    ARRIVAL — the reward moment.
 
-   `receipt` comes from departToNextStop(): the fare has already been
-   deducted by the time this renders, so it reports rather than decides.
-   Major stops get the long version.
+   `receipt` comes from departToNextStop(), so the fare is already in the
+   ledger by the time this renders. The screen deliberately holds the
+   PRE-fare balance on the purse and only counts it down when the player
+   presses the button: the ledger is bookkeeping, this is the story of it.
+   Paying is not a choice — there is no way to refuse a fare, and the
+   button is the beat, not the decision.
    ====================================================================== */
 function renderArrival(receipt){
   window.removeEventListener("resize", onResize);
@@ -2034,7 +2211,7 @@ function renderArrival(receipt){
   if(receipt.isMajor) setTimeout(launchConfetti, 500);
   setScene(roadForStop(SAVE.journey.stopIndex), "open");
 
-  const {to, isMajor, isFinal} = receipt;
+  const {to, isMajor, isFinal, farePaid, coinsRemaining} = receipt;
 
   const node = el(`
     <div class="screen arrival ${isMajor ? "major" : "minor"}" id="arrival">
@@ -2044,19 +2221,30 @@ function renderArrival(receipt){
         <div class="arrivekicker">${STRINGS.umewasili}</div>
         <h1 class="arrivename">${to.name}</h1>
         <div class="arrive-matatu">${matatuPhoto()}</div>
-
+        <div class="farenote">🪙 ${STRINGS.nauliNi(farePaid)}</div>
         <button class="btn red" id="onward">
-          ${isFinal ? "🏁 " + STRINGS.umefika : "🚐 " + STRINGS.endeleaSafari}
+          ${isFinal ? "🏁 " + STRINGS.umefika : "🎫 " + STRINGS.lipaNauli}
         </button>
       </div>
     </div>`);
 
-  node.querySelector("#onward").onclick = ()=>{
-    if(isFinal) renderJourneyEnd();
-    else renderMap();
+  const btn = node.querySelector("#onward");
+  btn.onclick = ()=>{
+    btn.disabled = true;
+    actx();
+    SFX.coin && SFX.coin();
+    // Watch the fare leave the purse, then get back on the road.
+    countCoinHudTo(coinsRemaining, 700, ()=>{
+      refreshCoinHud();            // hand the purse back to the ledger
+      if(isFinal) renderJourneyEnd();
+      else driveToNextLevel();
+    });
   };
   wireRail(node);
   show(node);
+  // Hold the pre-fare balance until the button is pressed, so there is
+  // something for the countdown to spend.
+  setCoinHudValue(coinsRemaining + farePaid);
 }
 
 /* ======================================================================
@@ -2118,10 +2306,12 @@ function fallbackCopy(text, cb){
 /* ======================================================================
    CONFETTI
    ====================================================================== */
-function launchConfetti(){
+// `count` scales the burst so every win is celebrated, but not equally: a
+// level cleared mid-leg gets a handful, arriving somewhere gets the lot.
+function launchConfetti(count){
   const layer = document.getElementById("confetti");
   const colors = ["#E63946","#FFB703","#2A9D8F","#1D3557","#F4802B","#fff"];
-  for(let i=0;i<90;i++){
+  for(let i=0;i<(count || 90);i++){
     const bit = document.createElement("div");
     bit.className = "confetti-bit";
     bit.style.left = Math.random()*100 + "vw";
@@ -2161,10 +2351,6 @@ function openSettings(){
     <div class="row">
       <span>📱 ${STRINGS.simuYako}</span>
       <strong>${esc(state.phone ? Cloud.prettyPhone(state.phone) : "—")}</strong>
-    </div>
-    <div class="row">
-      <span>🚐 ${STRINGS.matatuYako}</span>
-      <strong>${state.matatuName}</strong>
     </div>
     <div class="row">
       <span>↺ ${STRINGS.anzaUpya}</span>

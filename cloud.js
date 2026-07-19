@@ -30,25 +30,39 @@ window.Cloud = (function(){
 
      Normalised to E.164 before they ever leave the device, so that
      "0712 345 678", "712345678" and "+254712345678" are one account and
-     not three. Kenya (+254) is the default country; a number typed with
-     an explicit + keeps whatever country it names.
-     ================================================================== */
-  const DEFAULT_CC = "254";
+     not three.
 
-  function normalisePhone(raw){
+     There is no default country. The caller passes the calling code the
+     player picked, and a number typed with an explicit + or 00 keeps
+     whatever country it names regardless of that pick. Guessing a country
+     for someone is how you hand two different people the same account —
+     +254712345678 and +44712345678 are not the same phone.
+     ================================================================== */
+
+  // Known calling codes, longest first so "1868" wins over "1". Supplied by
+  // the UI (which owns the country list) via setCallingCodes().
+  let CALLING_CODES = [];
+  function setCallingCodes(codes){
+    CALLING_CODES = (codes || []).map(String).sort((a, b) => b.length - a.length);
+  }
+
+  function normalisePhone(raw, cc){
     let s = String(raw || "").trim();
-    const hadPlus = s.startsWith("+") || s.startsWith("00");
+    const intl = s.startsWith("+") || s.startsWith("00");
     s = s.replace(/[^0-9]/g, "");
     if(!s) return null;
 
-    if(hadPlus){
+    if(intl){
+      // The number names its own country; the picker is irrelevant.
       s = s.replace(/^00/, "");
-    }else if(s.startsWith("0")){
-      // Local trunk form: 0712345678 -> 254712345678
-      s = DEFAULT_CC + s.slice(1);
-    }else if(!s.startsWith(DEFAULT_CC)){
-      // Bare subscriber number: 712345678 -> 254712345678
-      s = DEFAULT_CC + s;
+    }else{
+      const code = String(cc || "").replace(/[^0-9]/g, "");
+      if(!code) return null;          // nothing to resolve a local number against
+      s = s.replace(/^0+/, "");       // national trunk prefix, e.g. 0712 -> 712
+      if(!s) return null;
+      // Someone who typed the full national number including their own
+      // calling code should not get it twice.
+      if(!(s.startsWith(code) && s.length > code.length + 5)) s = code + s;
     }
 
     // Must match the CHECK constraint on accounts.phone.
@@ -56,12 +70,23 @@ window.Cloud = (function(){
     return "+" + s;
   }
 
-  // For display: +254712345678 -> +254 712 345 678
+  // For display: +254712345678 -> +254 712 345 678. Splits the calling code
+  // off when it is one we know, and otherwise just groups the digits.
   function prettyPhone(e164){
     const s = String(e164 || "");
-    if(!s.startsWith("+" + DEFAULT_CC)) return s;
-    const rest = s.slice(1 + DEFAULT_CC.length);
-    return "+" + DEFAULT_CC + " " + rest.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+    if(!s.startsWith("+")) return s;
+    const digits = s.slice(1);
+    const code = CALLING_CODES.find(c => digits.startsWith(c));
+    const rest = code ? digits.slice(code.length) : digits;
+    const head = code ? "+" + code + " " : "+";
+    // Threes, except that a lone trailing digit joins the group before it —
+    // national formats differ far too much to do better generically, but
+    // "345 6" looks like a typo in any of them.
+    const groups = rest.match(/\d{1,3}/g) || [];
+    if(groups.length > 1 && groups[groups.length - 1].length === 1){
+      groups[groups.length - 2] += groups.pop();
+    }
+    return (head + groups.join(" ")).trim();
   }
 
   /* ---- queue: events recorded while offline, flushed on next success ---- */
@@ -215,6 +240,6 @@ window.Cloud = (function(){
 
   return {
     enabled, ready, loadAccount, syncPlayer, track, leaderboard, scoreFrom,
-    normalisePhone, prettyPhone,
+    normalisePhone, prettyPhone, setCallingCodes,
   };
 })();
