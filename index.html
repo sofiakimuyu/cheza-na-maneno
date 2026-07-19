@@ -630,6 +630,8 @@ const STRINGS = {
   ubaoInapakia: "Inapakia…",
   ubaoHakuna: "Bado hakuna washindi. Kuwa wa kwanza!",
   ubaoNjeMtandao: "Huna mtandao — ubao utaonekana ukirudi mtandaoni.",
+  ubaoHitilafu: "Ubao haupatikani kwa sasa. Jaribu tena baadaye.",
+  ubaoHaijawekwa: "Ubao haujawashwa bado.",
   wewe: "Wewe",
   jinaLako: "Jina lako:",
   salamu: (n) => `Karibu tena, ${n}!`,
@@ -1346,9 +1348,17 @@ function renderScoreboard(){
   const list = node.querySelector("#boardList");
   const msg  = node.querySelector("#boardMsg");
 
-  Cloud.leaderboard(50, state.phone).then(rows=>{
+  Cloud.leaderboard(50, state.phone).then(({ok, rows, reason})=>{
+    if(!ok){
+      // Offline is the player's problem to wait out; the other two are ours,
+      // and saying "be the first!" over a broken backend would be a lie.
+      msg.textContent = !navigator.onLine ? STRINGS.ubaoNjeMtandao
+                      : reason === "unconfigured" ? STRINGS.ubaoHaijawekwa
+                      : STRINGS.ubaoHitilafu;
+      return;
+    }
     if(!rows.length){
-      msg.textContent = navigator.onLine ? STRINGS.ubaoHakuna : STRINGS.ubaoNjeMtandao;
+      msg.textContent = STRINGS.ubaoHakuna;
       return;
     }
     msg.textContent = "";

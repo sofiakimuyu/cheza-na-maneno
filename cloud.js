@@ -221,18 +221,35 @@ window.Cloud = (function(){
     }catch(e){ enqueue(row); }
   }
 
-  // Public leaderboard. Returns [] on any failure so callers can render a
-  // clean empty state rather than an error. Phone numbers are never returned
-  // by the RPC — `isMe` is computed server-side from the number we pass in.
+  /* Public leaderboard.
+   *
+   * Returns { ok, rows, reason? }. It deliberately does NOT collapse a
+   * failure into an empty list: "nobody has played yet" and "the backend is
+   * not answering" look identical to a player but need opposite responses
+   * from us, and reporting the second as the first is how a broken
+   * scoreboard sits unnoticed.
+   *
+   * Phone numbers are never returned by the RPC — `isMe` is computed
+   * server-side from the number we pass in.
+   */
   async function leaderboard(limit = 50, phone = null){
-    if(!await ready()) return [];
+    if(!enabled)        return { ok:false, rows:[], reason:"unconfigured" };
+    if(!await ready())  return { ok:false, rows:[], reason:"unreachable" };
     try{
       const { data, error } = await client.rpc("leaderboard_top", {
         lim: limit, p_phone: phone,
       });
       if(error) throw error;
-      return (data || []).map(r => ({ ...r, isMe: !!r.is_me }));
-    }catch(e){ log("leaderboard failed", e && e.message); return []; }
+      return { ok:true, rows:(data || []).map(r => ({ ...r, isMe: !!r.is_me })) };
+    }catch(e){
+      const msg = (e && e.message) || "";
+      log("leaderboard failed", msg);
+      // PostgREST reports a missing RPC as a schema-cache miss. That means
+      // the database exists but schema.sql was never applied to it — a
+      // deployment gap, not a network problem, so say so differently.
+      const missing = /schema cache|does not exist/i.test(msg);
+      return { ok:false, rows:[], reason: missing ? "schema" : "error" };
+    }
   }
 
   // Retry queued events when the device comes back online.
