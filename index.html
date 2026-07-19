@@ -123,6 +123,28 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .credit{position:absolute; bottom:calc(10px + var(--safe-b)); font-size:.72rem;
   color:rgba(255,255,255,.92); text-shadow:0 1px 3px rgba(0,0,0,.55);}
 
+/* ============================ NAME INPUT ============================ */
+.nameinput{width:min(340px,86vw); margin-top:16px; padding:14px 16px; border-radius:14px;
+  border:3px solid var(--ink); background:#fff; color:var(--ink);
+  font-family:inherit; font-weight:800; font-size:1.05rem; text-align:center; outline:none;}
+.nameinput:focus{border-color:var(--blue); box-shadow:0 0 0 4px rgba(0,0,0,.08);}
+.nameinput::placeholder{color:var(--ink-soft); opacity:.6; font-weight:700;}
+.namehint{min-height:1.1em; margin-top:8px; font-size:.78rem; font-weight:700; color:var(--red);}
+
+/* ============================ SCOREBOARD ============================ */
+#board .boardlist{width:min(420px,92vw); margin-top:10px; display:flex; flex-direction:column; gap:8px;
+  max-height:62vh; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+.boardrow{display:flex; align-items:center; gap:10px; background:var(--tile); border:3px solid var(--ink);
+  border-radius:14px; padding:9px 12px; box-shadow:0 4px 0 var(--tile-sh);}
+.boardrow.me{background:var(--cream-2); border-color:var(--blue);}
+.boardrow .pos{font-weight:900; font-size:.95rem; min-width:2.1em; color:var(--ink-soft);}
+.boardrow .who{flex:1; font-weight:800; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.boardrow .who .metag{font-size:.62rem; font-weight:800; color:#fff; background:var(--blue);
+  border-radius:6px; padding:1px 5px; margin-left:6px; vertical-align:1px;}
+.boardrow .val{font-weight:900; color:var(--blue); white-space:nowrap;}
+.boardrow .val small{display:block; font-size:.6rem; color:var(--ink-soft); font-weight:700; text-align:right;}
+.boardempty{width:min(420px,92vw); margin-top:16px; font-weight:700; color:var(--ink-soft); line-height:1.5;}
+
 /* ============================ TOP HUD ============================ */
 .hud{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px; }
 .hud .icon-btn{width:44px; height:44px; border-radius:14px; background:rgba(255,255,255,.85);
@@ -401,20 +423,6 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 
 #finish .blurb{margin:12px 0;}
 
-/* ---- scoreboard ---- */
-.boardwrap{flex:1; overflow-y:auto; padding:8px 12px calc(20px + var(--safe-b));
-  max-width:560px; margin:0 auto; width:100%;}
-.btable{width:100%; border-collapse:collapse; background:rgba(255,255,255,.95);
-  border-radius:16px; overflow:hidden; box-shadow:0 6px 0 rgba(0,0,0,.2);}
-.btable th{background:var(--blue); color:#fff; font-size:.72rem; padding:8px 6px; text-align:left;}
-.btable td{padding:10px 6px; border-top:2px solid #efe6d4; vertical-align:middle;}
-.btable .num{text-align:center; font-weight:800; color:var(--blue);}
-.btable .rank{width:34px; text-align:center; font-weight:800; color:var(--red); font-size:1.1rem;}
-.bname{font-weight:800; font-size:.95rem;}
-.bmeta{font-size:.68rem; font-weight:700; color:var(--ink-soft);}
-.boardnote{font-size:.72rem; font-weight:600; color:var(--ink-soft); line-height:1.5;
-  background:rgba(255,255,255,.7); border-radius:12px; padding:10px 12px; margin-top:12px;}
-
 /* ---- traffic wall ---- */
 /* transparent so the jam photo behind it shows through; the hazard bands and
    the card carry the structure */
@@ -472,6 +480,11 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 <script src="economy.js"></script>
 <script src="route.js"></script>
 <script src="journey.js"></script>
+<!-- Cloud sync is optional: with supabase-config.js blank the game runs
+     exactly as before, fully offline. See cloud.js. -->
+<script src="vendor/supabase.js"></script>
+<script src="supabase-config.js"></script>
+<script src="cloud.js"></script>
 <script>
 "use strict";
 
@@ -538,6 +551,23 @@ const STRINGS = {
   // settings extras
   matatuYako: "Matatu yako:",
   toleo: "Toleo 1.0",
+  // onboarding / username
+  karibu: "Karibu!",
+  jinaUliza: "Jina lako ni nani?",
+  jinaMaelezo: "Tutalitumia kwenye ubao wa washindi.",
+  jinaKishika: "Andika jina lako…",
+  jinaFupi: "Jina liwe na herufi 2 au zaidi.",
+  jinaRefu: "Jina ni refu mno — herufi 16 au chini.",
+  jinaBadili: "Badili jina",
+  // scoreboard
+  ubao: "Ubao wa Washindi",
+  ubaoShort: "Ubao",
+  ubaoInapakia: "Inapakia…",
+  ubaoHakuna: "Bado hakuna washindi. Kuwa wa kwanza!",
+  ubaoNjeMtandao: "Huna mtandao — ubao utaonekana ukirudi mtandaoni.",
+  wewe: "Wewe",
+  jinaLako: "Jina lako:",
+  salamu: (n) => `Karibu tena, ${n}!`,
   // difficulty labels
   diff: {easy:"Rahisi", medium:"Wastani", hard:"Ngumu", expert:"Bingwa"},
 
@@ -569,9 +599,6 @@ const STRINGS = {
   jumlaNgazi: "Ngazi",
   jumlaVidokezo: "Vidokezo",
   // scoreboard
-  ubaoTitle: "Ubao wa Matokeo",
-  mbaliZaidi: "Umefika",
-  vidokezoVilivyotumika: "Vidokezo",
   marudioJumla: "Marudio",
 };
 
@@ -619,7 +646,23 @@ const state = {
   get levels(){ return SAVE.levels; },
   get currentLevelId(){ return SAVE.levelCursor; },
   set currentLevelId(v){ SAVE.levelCursor = v; persist(); },
+  // Backing for onboarding + the cloud scoreboard. These live in the same
+  // versioned save as everything else, not a second localStorage key.
+  get username(){ return SAVE.profile.username; },
+  set username(v){ SAVE.profile.username = v; persist(); },
+  get playerId(){ return SAVE.profile.playerId; },
+  get firstSeen(){ return SAVE.profile.firstSeen; },
+  set firstSeen(v){ SAVE.profile.firstSeen = v; persist(); },
 };
+
+// Kept from the pre-IndexedDB save: onboarding still stamps a join date, and
+// the anonymous player id lets the scoreboard dedupe devices. Neither gates
+// anything — the device clock is not trusted.
+function newPlayerId(){
+  if(crypto.randomUUID) return crypto.randomUUID();
+  return "p-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,10);
+}
+function todayStamp(){ return new Date().toISOString().slice(0,10); } // YYYY-MM-DD
 function saveState(){ persist(); }
 function levelRecord(id){
   if(!state.levels[id]) state.levels[id] = {completed:false, foundAnswers:[], foundBonus:[]};
@@ -833,6 +876,11 @@ function matatuSVG(name, sk, opts){
    ====================================================================== */
 const appEl = document.getElementById("app");
 function el(html){ const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstElementChild; }
+/* Player-supplied text (usernames) is interpolated into innerHTML — always esc() it.
+   Matters more once a shared scoreboard renders *other* players' names. */
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 function show(node){ appEl.innerHTML = ""; appEl.appendChild(node); }
 
 /* ======================================================================
@@ -910,28 +958,101 @@ function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 /* ======================================================================
    HOME SCREEN
    ====================================================================== */
+/* First visit only: ask for a name so the scoreboard has someone to name. */
+function cleanName(raw){
+  return String(raw||"").replace(/\s+/g," ").trim().slice(0,16);
+}
+function renderOnboarding(){
+  const node = el(`
+    <div class="screen" id="home">
+      <div class="titlewrap"><h1>${STRINGS.karibu}</h1></div>
+      <div class="home-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="sub">${STRINGS.jinaUliza}</div>
+      <input class="nameinput" id="nameIn" type="text" maxlength="16"
+             autocomplete="nickname" autocapitalize="words" spellcheck="false"
+             placeholder="${STRINGS.jinaKishika}">
+      <div class="namehint" id="nameHint"></div>
+      <div class="homebtns">
+        <button class="btn red" id="goBtn">🚐 ${STRINGS.twende}</button>
+      </div>
+      <div class="credit">${STRINGS.jinaMaelezo}</div>
+    </div>`);
+  const input = node.querySelector("#nameIn");
+  const hint  = node.querySelector("#nameHint");
+  const submit = ()=>{
+    const name = cleanName(input.value);
+    if(name.length < 2){ hint.textContent = STRINGS.jinaFupi; input.focus(); return; }
+    actx();
+    state.username = name;
+    state.firstSeen = todayStamp();
+    saveState();
+    Cloud.syncPlayer(state);
+    SFX.select && SFX.select();
+    renderHome();
+  };
+  node.querySelector("#goBtn").onclick = submit;
+  input.addEventListener("input", ()=>{ hint.textContent = ""; });
+  input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") submit(); });
+  setScene(HOME_PHOTO, "open");   // same backdrop as the home screen
+  show(node);
+  input.focus();
+}
 function renderHome(){
   const anyProgress = Object.values(state.levels).some(l=>l.completed || (l.foundAnswers&&l.foundAnswers.length));
   const node = el(`
     <div class="screen" id="home">
       <div class="titlewrap"><h1>${STRINGS.gameTitle}</h1></div>
       <div class="home-matatu">${matatuSVG(state.matatuName)}</div>
-      <div class="sub">${STRINGS.tagline}</div>
+      <div class="sub">${state.username ? STRINGS.salamu(esc(state.username)) : STRINGS.tagline}</div>
       <div class="homebtns">
         <button class="btn red" id="playBtn">🚐 ${anyProgress ? STRINGS.endelea : STRINGS.anza}</button>
-        <button class="btn green" id="boardBtn">🏆 ${STRINGS.ubaoTitle}</button>
+        ${Cloud.enabled ? `<button class="btn green" id="boardBtn">🏆 ${STRINGS.ubaoShort}</button>` : ""}
         <button class="btn ghost" id="setBtn">⚙️ ${STRINGS.mipangilio}</button>
       </div>
       <div class="credit">${STRINGS.matatuYako} “${state.matatuName}” · ${STRINGS.toleo}</div>
     </div>`);
   // The route map is the hub — play always goes there first, so the player
-  // sees where the matatu is before boarding.
+  // sees where the matatu is (and any traffic) before boarding.
   node.querySelector("#playBtn").onclick = ()=>{ actx(); renderMap(); };
-  node.querySelector("#boardBtn").onclick = ()=> renderScoreboard();
+  const bb = node.querySelector("#boardBtn");
+  if(bb) bb.onclick = ()=> renderScoreboard();
   node.querySelector("#setBtn").onclick = ()=> openSettings();
   setScene(HOME_PHOTO, "open");
   show(node);
   maybeMountDebug();
+}
+/* Public scoreboard. Renders a clean empty/offline state rather than an error
+   if the cloud is unconfigured or unreachable — the game is offline-first. */
+function renderScoreboard(){
+  const node = el(`
+    <div class="screen" id="board">
+      <div class="titlewrap"><h1>🏆 ${STRINGS.ubao}</h1></div>
+      <div class="boardlist" id="boardList"></div>
+      <div class="boardempty" id="boardMsg">${STRINGS.ubaoInapakia}</div>
+      <div class="homebtns" style="margin-top:16px">
+        <button class="btn ghost" id="backBtn">← ${STRINGS.funga}</button>
+      </div>
+    </div>`);
+  node.querySelector("#backBtn").onclick = ()=> renderHome();
+  show(node);
+
+  const list = node.querySelector("#boardList");
+  const msg  = node.querySelector("#boardMsg");
+
+  Cloud.leaderboard(50).then(rows=>{
+    if(!rows.length){
+      msg.textContent = navigator.onLine ? STRINGS.ubaoHakuna : STRINGS.ubaoNjeMtandao;
+      return;
+    }
+    msg.textContent = "";
+    list.innerHTML = rows.map((r,i)=>`
+      <div class="boardrow ${r.isMe ? "me" : ""}">
+        <span class="pos">${i+1}.</span>
+        <span class="who">${esc(r.username)}${r.isMe ? `<span class="metag">${STRINGS.wewe}</span>` : ""}</span>
+        <span class="val">${r.levels_done}<small>${STRINGS.vituo}</small></span>
+        <span class="val">${r.sarafu}<small>${STRINGS.sarafu}</small></span>
+      </div>`).join("");
+  });
 }
 function firstPlayableLevel(){
   const next = nextUnplayedLevel();
@@ -1060,6 +1181,7 @@ function renderMap(){
    ====================================================================== */
 function startLevel(levelId){
   const puzzle = PUZZLES.find(p=>p.levelId===levelId) || PUZZLES[0];
+  Cloud.track("level_start", puzzle.levelId);
   const node = el(`
     <div class="screen" id="intro">
       <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · <span class="pill ${puzzle.difficulty}">${STRINGS.diff[puzzle.difficulty]||puzzle.difficulty}</span></div>
@@ -1514,6 +1636,7 @@ function useHint(){
   if(!empties.length){ toast(STRINGS.hakunaKuonyesha, "nudge"); return; }
   postLedger(-CFG.hintCost, "hint", {levelId: G.puzzle.levelId});
   noteHintUsed();
+  Cloud.track("hint_used", G.puzzle.levelId);
   refreshCoinHud(false);
   const cell = empties[Math.floor(Math.random()*empties.length)];
   cell.filled = true; cell.hinted = true;
@@ -1574,6 +1697,8 @@ function checkComplete(){
   }
   saveState();
 
+  Cloud.track("level_complete", G.puzzle.levelId);
+  Cloud.syncPlayer(state);
   setTimeout(()=>{
     if(departure) renderArrival(departure);
     else celebrate(G.puzzle, firstTime);
@@ -1828,6 +1953,10 @@ function openSettings(){
       <div class="switch ${state.soundOn?'on':''}" id="soundSw"></div>
     </div>
     <div class="row">
+      <span>🙋 ${STRINGS.jinaLako}</span>
+      <button class="btn sm" id="nameBtn">${esc(state.username || "—")}</button>
+    </div>
+    <div class="row">
       <span>🚐 ${STRINGS.matatuYako}</span>
       <strong>${state.matatuName}</strong>
     </div>
@@ -1841,6 +1970,33 @@ function openSettings(){
   const sw = ov.querySelector("#soundSw");
   sw.onclick = ()=>{ state.soundOn = !state.soundOn; sw.classList.toggle("on", state.soundOn); if(state.soundOn){actx(); SFX.select();} saveState(); };
   ov.querySelector("#resetBtn").onclick = ()=>{ ov.remove(); confirmReset(); };
+  ov.querySelector("#nameBtn").onclick = ()=>{ ov.remove(); editName(); };
+}
+function editName(){
+  const ov = openModal(`
+    <h2>🙋 ${STRINGS.jinaBadili}</h2>
+    <input class="nameinput" id="nameIn" type="text" maxlength="16"
+           autocomplete="nickname" autocapitalize="words" spellcheck="false"
+           placeholder="${STRINGS.jinaKishika}" value="${esc(state.username || "")}">
+    <div class="namehint" id="nameHint"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:6px">
+      <button class="btn ghost" data-close>${STRINGS.sitaki}</button>
+      <button class="btn green" id="saveName">${STRINGS.thibitisha}</button>
+    </div>
+  `);
+  const input = ov.querySelector("#nameIn");
+  const hint  = ov.querySelector("#nameHint");
+  const submit = ()=>{
+    const name = cleanName(input.value);
+    if(name.length < 2){ hint.textContent = STRINGS.jinaFupi; input.focus(); return; }
+    state.username = name; saveState();
+    Cloud.syncPlayer(state);
+    ov.remove(); renderHome();
+  };
+  ov.querySelector("#saveName").onclick = submit;
+  input.addEventListener("input", ()=>{ hint.textContent = ""; });
+  input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") submit(); });
+  input.focus(); input.select();
 }
 function confirmReset(){
   const ov = openModal(`
@@ -1854,56 +2010,16 @@ function confirmReset(){
   ov.querySelector("#doReset").onclick = async ()=>{
     await resetJourney();
     paintMatatu();
-    ov.remove(); renderHome();
+    ov.remove(); renderOnboarding();   // reset clears the name too — ask again
   };
 }
 
 /* ======================================================================
    SCOREBOARD
 
-   Local and single-player, but built on rankScores() so that adding remote
+   The cloud leaderboard in cloud.js is the scoreboard; these fields feed it
    entries later is a matter of concatenating them into the array.
    ====================================================================== */
-function renderScoreboard(){
-  const board = rankScores([scoreEntry()]);
-  const rows = board.map((s, i)=> `
-    <tr>
-      <td class="rank">${i+1}</td>
-      <td>
-        <div class="bname">${s.furthestStopName}</div>
-        <div class="bmeta">${s.kmReached} km · ${s.levelsPlayed} ${STRINGS.jumlaNgazi.toLowerCase()}</div>
-      </td>
-      <td class="num">${s.hintsUsed}</td>
-      <td class="num">${s.coinsRemaining}</td>
-      <td class="num">${s.levelsReplayed}</td>
-    </tr>`).join("");
-
-  const node = el(`
-    <div class="screen" id="board">
-      <div class="maphead">
-        <button class="icon-btn" id="bHome">🏠</button>
-        <h2>${STRINGS.ubaoTitle}</h2>
-        <div class="coins"><span class="c"></span><span>${coins()}</span></div>
-      </div>
-      <div class="boardwrap">
-        <table class="btable">
-          <thead><tr>
-            <th></th><th>${STRINGS.mbaliZaidi}</th>
-            <th class="num">💡</th><th class="num">🪙</th><th class="num">↺</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-        <p class="boardnote">
-          Nafasi hupangwa kwa kituo cha mbali zaidi, kisha vidokezo vichache,
-          kisha sarafu zilizobaki, kisha marudio machache.
-        </p>
-      </div>
-    </div>`);
-  node.querySelector("#bHome").onclick = renderHome;
-  setScene(MAP_PHOTO, "map");
-  show(node);
-}
-
 /* ======================================================================
    DEBUG PANEL — dev builds only.
 
@@ -1989,7 +2105,9 @@ async function boot(){
     console.warn("save unavailable, playing unsaved", e);
   }
   paintMatatu();
-  renderHome();
+  // Onboarding collects the name the cloud scoreboard ranks under; returning
+  // players go straight home.
+  state.username ? renderHome() : renderOnboarding();
 }
 boot();
 

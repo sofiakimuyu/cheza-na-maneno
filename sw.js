@@ -9,6 +9,9 @@ const ASSETS = [
   "./economy.js",
   "./route.js",
   "./journey.js",
+  "./supabase-config.js",
+  "./cloud.js",
+  "./vendor/supabase.js",
   "./manifest.json",
   "./icon.svg",
   "./icon-maskable.svg",
@@ -36,17 +39,41 @@ self.addEventListener("activate", (e)=>{
   );
 });
 
-// cache-first; fall back to network, then cache the fresh copy
+/* Files that change when the game is redeployed. These are network-first:
+   we serve the freshest copy when online and fall back to cache when not.
+   Pure cache-first here would pin the app to whatever shipped first — most
+   painfully, a stale supabase-config.js means new Supabase credentials would
+   silently never take effect on a device that had already loaded the game. */
+const SHELL = /\/(index\.html|supabase-config\.js|cloud\.js)$|\/$/;
+
 self.addEventListener("fetch", (e)=>{
   if(e.request.method !== "GET") return;
+
+  // Only ever cache our own static assets. Cross-origin calls (Supabase auth,
+  // scoreboard reads, telemetry) must always hit the network — caching them
+  // would freeze the leaderboard at whatever it said the first time.
+  const url = new URL(e.request.url);
+  if(url.origin !== self.location.origin) return;
+
+  const cacheFresh = (res)=>{
+    const copy = res.clone();
+    caches.open(CACHE).then((c)=> c.put(e.request, copy)).catch(()=>{});
+    return res;
+  };
+
+  if(SHELL.test(url.pathname)){
+    // network-first
+    e.respondWith(
+      fetch(e.request).then(cacheFresh)
+        .catch(()=> caches.match(e.request).then(hit => hit || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // everything else (vendor bundle, puzzles, icons) is cache-first
   e.respondWith(
-    caches.match(e.request).then((hit)=>{
-      if(hit) return hit;
-      return fetch(e.request).then((res)=>{
-        const copy = res.clone();
-        caches.open(CACHE).then((c)=> c.put(e.request, copy)).catch(()=>{});
-        return res;
-      }).catch(()=> caches.match("./index.html"));
-    })
+    caches.match(e.request).then((hit)=>
+      hit || fetch(e.request).then(cacheFresh).catch(()=> caches.match("./index.html"))
+    )
   );
 });

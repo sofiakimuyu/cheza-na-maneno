@@ -1,2 +1,9 @@
 .claude/
 .DS_Store
+
+# The admin dashboard must never reach main: GitHub Pages publishes this repo
+# from main at the root, and the repo is public, so committing it here would
+# put a live login form on the internet. It lives on the `private-dashboard`
+# branch instead. To use it locally:
+#   git show private-dashboard:dashboard.html > dashboard.html
+dashboard.html

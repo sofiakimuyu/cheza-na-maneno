@@ -116,11 +116,17 @@ function defaultSave() {
       levelsReplayed: 0,
     },
 
-    // Cosmetic / preferences.
+    // Cosmetic / preferences / identity.
     profile: {
       soundOn: true,
       matatuName: null, // filled by the game on first boot
       skinIdx: 0,
+      // Onboarding + cloud scoreboard. username is null until the player
+      // picks one; playerId is a stable anonymous id so the leaderboard can
+      // dedupe devices without any account.
+      username: null,
+      playerId: newId(),
+      firstSeen: null,
     },
   };
 }
@@ -160,6 +166,11 @@ function migrateSave(raw) {
         soundOn: s.soundOn !== false,
         matatuName: s.matatuName || null,
         skinIdx: Number(s.skinIdx) || 0,
+        // The pre-IndexedDB build already collected these, so a player who
+        // onboarded there keeps their name and scoreboard identity.
+        username: s.username || null,
+        playerId: s.playerId || newId(),
+        firstSeen: s.firstSeen || null,
       },
       stats: {
         ...d.stats,
@@ -417,9 +428,13 @@ function departToNextStop() {
 /* ======================================================================
    SCOREBOARD
 
-   Local and single-player for now. Ranked by furthest stop reached, then
-   fewest hints, then coins remaining, then fewest replays. The comparator
-   is written against a list so dropping in remote entries later is additive.
+   scoreEntry() is the single place that describes "how far did this run get".
+   The cloud leaderboard in cloud.js ranks players; this feeds the journey-end
+   summary and is the shape a richer remote board would consume.
+
+   Note: furthestStopIndex / hintsUsed / levelsReplayed have no column in the
+   Supabase schema yet, so they do not appear on the cloud board. They are
+   recorded locally and ready if that schema gains the columns.
    ====================================================================== */
 
 function scoreEntry() {
@@ -434,19 +449,6 @@ function scoreEntry() {
     levelsReplayed: SAVE.stats.levelsReplayed,
     farePaid: totalFarePaid(),
   };
-}
-
-function compareScores(a, b) {
-  return (
-    b.furthestStopIndex - a.furthestStopIndex || // further is better
-    a.hintsUsed - b.hintsUsed ||                 // fewer hints is better
-    b.coinsRemaining - a.coinsRemaining ||       // richer is better
-    a.levelsReplayed - b.levelsReplayed          // fewer replays is better
-  );
-}
-
-function rankScores(entries) {
-  return entries.slice().sort(compareScores);
 }
 
 /* ======================================================================
