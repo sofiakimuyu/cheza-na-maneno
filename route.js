@@ -269,7 +269,7 @@ const STOPS = [
     tier: "major",
     blurb:
       "Umefika! Kisiwa cha Mombasa — Fort Jesus, mitaa ya Kale, na feri ya Likoni ikivuka " +
-      "maji. Upepo wa bahari unagusa uso baada ya kilomita 487 za barabara. " +
+      "maji. Upepo wa bahari unagusa uso baada ya safari ndefu ya barabara. " +
       "Makanga anashusha mizigo: “Mwisho wa safari, karibu Mombasa!”",
   },
 ];

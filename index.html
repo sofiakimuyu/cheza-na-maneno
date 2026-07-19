@@ -118,7 +118,24 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 #home .sub{font-weight:700; color:var(--blue); font-size:1rem; margin-top:14px;
   text-shadow:0 1px 3px rgba(255,246,233,.9);}
 #home .homebtns{display:flex; flex-direction:column; gap:12px; width:min(340px,86vw); margin-top:14px;}
+/* Board / map / settings — always reachable, in one of two shapes.
+   `.corner` stacks them opposite the purse on the poster screens, leaving the
+   middle for the one button that matters; the top offset matches #coinHud so
+   the two corners line up. `.row` lays them along the game HUD instead, where
+   every spare vertical pixel belongs to the crossword. */
+.rail{display:flex; gap:10px;}
+.rail.corner{position:absolute; top:calc(8px + env(safe-area-inset-top,0px)); left:12px;
+  flex-direction:column;}
+/* The stack is out of flow, so the game HUD holds a slot the width of one
+   icon to keep its title clear of the top button — the same trick .coinslot
+   plays on the other side. */
+.railslot{flex:none; width:44px;}
 .home-matatu{width:min(360px,90vw); margin:6px 0 2px;}
+/* The photo matatu has no shadow baked in, so wherever it stands in for the
+   painted SVG it needs one to sit on the road instead of floating. The
+   container keeps its own width; the photo just fills it. */
+.home-matatu img, .intro-matatu img, .arrive-matatu img{
+  width:100%; display:block; filter:drop-shadow(0 10px 10px rgba(0,0,0,.32));}
 /* sits on the darkened foot of the scenery, so it reads light */
 .credit{position:absolute; bottom:calc(10px + var(--safe-b)); font-size:.72rem;
   color:rgba(255,255,255,.92); text-shadow:0 1px 3px rgba(0,0,0,.55);}
@@ -147,18 +164,37 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 
 /* ============================ TOP HUD ============================ */
 .hud{display:flex; align-items:center; gap:8px; padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px; }
-.hud .icon-btn{width:44px; height:44px; border-radius:14px; background:rgba(255,255,255,.85);
+/* Used by the game HUD, the map header and the home rail — 44px is the tap
+   target, so keep it that size wherever it lands. */
+.icon-btn{width:44px; height:44px; border-radius:14px; background:rgba(255,255,255,.85);
   box-shadow:0 4px 0 rgba(0,0,0,.12); font-size:1.3rem; display:flex; align-items:center; justify-content:center;}
-.hud .icon-btn:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.12);}
+.icon-btn:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.12);}
 .hud .center{flex:1; text-align:center; min-width:0;}
 .hud .kicker{font-size:.7rem; font-weight:700; color:var(--blue); text-transform:uppercase; letter-spacing:1px;}
-.hud .checkpoint{font-size:1.05rem; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+/* Sized so every stop name but the longest ("Kyumvi (Machakos Junction)",
+   which never fitted here) clears the width the rail and the purse leave. */
+.hud .checkpoint{font-size:.92rem; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .coins{display:flex; align-items:center; gap:6px; background:var(--blue); color:#fff; padding:8px 12px;
   border-radius:14px; font-weight:800; box-shadow:0 4px 0 #12203a; font-variant-numeric:tabular-nums;}
 .coins .c{width:20px; height:20px; border-radius:50%; background:radial-gradient(circle at 35% 30%, #ffe08a, var(--yellow) 60%, var(--yellow-d));
   border:2px solid #fff; box-shadow:inset 0 0 0 2px var(--yellow-d);}
 .coin-pop{animation:coinPop .4s ease;}
 @keyframes coinPop{0%{transform:scale(1);}40%{transform:scale(1.35);}100%{transform:scale(1);}}
+/* The purse follows the player everywhere — same corner on every screen, so
+   it never blinks out between a level and the drive that follows it. z 86
+   clears the drive transition (z 85); toasts (70) and confetti (90) keep their
+   own relationship to it. Dialogs sit lower but are modal, so the rule below
+   dims the badge rather than letting it glow over the scrim.
+   Offsets mirror .hud / .maphead padding so the badge lands exactly where the
+   in-header slot below reserves space for it. */
+#coinHud{position:fixed; top:calc(8px + env(safe-area-inset-top,0px)); right:12px; z-index:86;
+  transition:opacity .2s ease;}
+/* A dialog is a deliberate interruption — the badge stays put but drops back
+   behind the scrim's mood rather than glowing over it. */
+body:has(.overlay) #coinHud{opacity:.35;}
+/* An invisible copy of the badge, left in the header flow so the centred
+   title stays centred and is never overlapped by the fixed badge above it. */
+.coinslot{visibility:hidden;}
 
 /* ============================ GAME LAYOUT ============================ */
 #game{display:flex; flex-direction:column;}
@@ -168,7 +204,11 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .bonuschip .jar{font-size:1.1rem;}
 .bonuschip:active{transform:translateY(2px);}
 
-.gridwrap{flex:1; display:flex; align-items:center; justify-content:center; min-height:0; padding:6px 10px;}
+/* The left gutter clears the icon stack, which is out of flow above it. The
+   crossword centres in what is left rather than on the screen — asymmetric,
+   but padding both sides equally would cost the wide puzzles twice over. */
+.gridwrap{flex:1; display:flex; align-items:center; justify-content:center; min-height:0;
+  padding:6px 10px 6px 62px;}
 .grid{display:grid; gap:4px;}
 .cell{
   width:var(--cell); height:var(--cell); border-radius:9px;
@@ -184,8 +224,12 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .cell.hinted{background:#fff2cf; color:var(--orange-d);}
 @keyframes cellPop{0%{transform:scale(.3); opacity:.2;}60%{transform:scale(1.15);}100%{transform:scale(1);}}
 
-/* word in progress */
-.wordbar{height:52px; display:flex; align-items:center; justify-content:center;}
+/* Word in progress, flanked by the two controls. They live out here against
+   the walls rather than in a row of their own above the wheel: this row was
+   mostly empty either side of the bubble, so the crossword gets the whole
+   height the controls used to occupy. */
+.wordbar{height:62px; display:flex; align-items:center; justify-content:space-between;
+  gap:8px; padding:0 10px;}
 .wordbubble{min-width:64px; padding:6px 18px; border-radius:16px; font-size:1.6rem; font-weight:800;
   letter-spacing:3px; color:#fff; background:var(--blue); box-shadow:0 4px 0 #12203a; min-height:48px;
   display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .15s;}
@@ -197,8 +241,9 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 
 /* ============================ WHEEL ============================ */
 .wheelzone{padding:2px 10px calc(10px + var(--safe-b));}
-.controls{display:flex; justify-content:center; gap:14px; margin-bottom:8px;}
-.ctrl{width:54px; height:54px; border-radius:50%; background:#fff; box-shadow:0 5px 0 var(--tile-sh);
+/* Both controls are the same width, so the bubble between them stays centred
+   on screen without any extra machinery. */
+.ctrl{flex:none; width:54px; height:54px; border-radius:50%; background:#fff; box-shadow:0 5px 0 var(--tile-sh);
   display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:1.4rem; position:relative;}
 .ctrl:active{transform:translateY(4px); box-shadow:0 1px 0 var(--tile-sh);}
 .ctrl .lbl{font-size:.55rem; font-weight:800; color:var(--ink-soft); margin-top:-2px;}
@@ -372,7 +417,6 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
 .kstop.current .klabel{background:var(--yellow);}
 .kstop.major .klabel{border:3px solid var(--blue);}
 .kname{font-weight:800; font-size:.95rem; line-height:1.15;}
-.kmeta{font-size:.65rem; font-weight:700; color:var(--ink-soft); margin-top:1px;}
 
 /* road segment between two stops; hosts the fractional matatu */
 .kseg{position:relative; height:52px;}
@@ -477,6 +521,7 @@ h1,h2,.poster{font-weight:800; letter-spacing:.5px;}
   <div class="scrim"></div>
 </div>
 <div id="app"></div>
+<div class="coins" id="coinHud"><span class="c"></span><span id="coinNum">0</span></div>
 <div id="toasts"></div>
 <div id="confetti"></div>
 
@@ -509,7 +554,6 @@ const STRINGS = {
   changanya: "Changanya",
   kidokezo: "Kidokezo",
   sarafu: "Sarafu",
-  nauli: "Nauli",
   kituo: "Kituo",
   vituo: "Vituo",
   safari: "Safari",
@@ -589,7 +633,7 @@ const STRINGS = {
   legOf: (a, b) => `${a} → ${b}`,
   ngaziYa: (a, b) => `Ngazi ${a} / ${b}`,
   // journey end
-  mwishoSub: "Umevuka kilomita 487 za barabara — mwisho wa safari.",
+  mwishoSub: "Umevuka barabara nzima — mwisho wa safari.",
   // traffic wall: the road continues but the word list has run out
   trafficTitle: "MSONGAMANO!",
   trafficSub: "Traffic!",
@@ -598,7 +642,6 @@ const STRINGS = {
   trafficBodyEn: "The road ahead is jammed — you can't travel further right now.",
   trafficStuck: (a, b) => `Umekwama ${a}, ukielekea ${b}`,
   trafficNote: "Umemaliza maneno yote yaliyopo. Maneno mapya yakiongezwa, safari itaendelea.",
-  jumlaUmbali: "Umbali",
   jumlaNauli: "Nauli jumla",
   jumlaNgazi: "Ngazi",
   jumlaVidokezo: "Vidokezo",
@@ -885,7 +928,39 @@ function el(html){ const d = document.createElement("div"); d.innerHTML = html.t
 function esc(s){
   return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
-function show(node){ appEl.innerHTML = ""; appEl.appendChild(node); }
+/* Headers that used to own a coin badge now reserve its footprint instead —
+   see #coinHud. Screens without a header just let the badge float. */
+function coinSlot(){
+  return `<div class="coins coinslot"><span class="c"></span><span>${coins()}</span></div>`;
+}
+/* The Maneno SACCO photo, used wherever the matatu is the hero of the screen.
+   The painted SVG is still the right tool for the map dot and the traffic jam,
+   where it has to be small or wear a different sacco's colours. */
+function matatuPhoto(){
+  return `<img src="${MATATU_PHOTO}" alt="" decoding="async">`;
+}
+/* Board / map / settings, stacked in the corner opposite the purse. Shared by
+   the home and level-intro screens, so the way out is always in one place.
+   Call wireRail() on the rendered node to hook the buttons up. */
+function railHTML(shape){
+  return `<div class="rail ${shape || "corner"}">
+    ${Cloud.enabled ? `<button class="icon-btn" id="railBoard" title="${STRINGS.ubaoShort}" aria-label="${STRINGS.ubaoShort}">🏆</button>` : ""}
+    <button class="icon-btn" id="railMap" title="${STRINGS.ramaniShort}" aria-label="${STRINGS.ramaniShort}">🗺️</button>
+    <button class="icon-btn" id="railSet" title="${STRINGS.mipangilio}" aria-label="${STRINGS.mipangilio}">⚙️</button>
+  </div>`;
+}
+function wireRail(node){
+  const board = node.querySelector("#railBoard");
+  if(board) board.onclick = ()=> renderScoreboard();
+  node.querySelector("#railMap").onclick = ()=>{ actx(); renderMap(); };
+  node.querySelector("#railSet").onclick = ()=> openSettings();
+}
+function show(node){
+  appEl.innerHTML = "";
+  appEl.appendChild(node);
+  setCoinHudVisible(true);
+  refreshCoinHud(false);
+}
 
 /* ======================================================================
    ROAD SCENERY — which photo sits behind each screen
@@ -908,10 +983,10 @@ const ROAD_PHOTOS = [
 const HOME_PHOTO   = "assets/road-08-mountain.jpg";      // open road for the title
 const FINISH_PHOTO = "assets/road-10-mombasa-tusks.jpg"; // Mombasa = end of the line
 const MAP_PHOTO    = "assets/kenya-map.jpg";
-// The Maneno SACCO matatu, rear three-quarter — used for the drive between
-// levels. The painted SVG matatu still carries the map, home and arrival
-// screens, where a side view is what reads.
-const DRIVE_MATATU = "assets/maneno-matatu.png";
+// The Maneno SACCO matatu, rear three-quarter — the hero image on the home
+// screen and the drive between levels. The painted SVG matatu still carries
+// the in-journey screens, where it shows off the player's own matatu name.
+const MATATU_PHOTO = "assets/maneno-matatu.png";
 
 // The stretch of road a given kituo is driving through. The photos are spread
 // across the whole route rather than cycled, so the scenery only ever moves
@@ -974,7 +1049,7 @@ function renderOnboarding(){
   const node = el(`
     <div class="screen" id="home">
       <div class="titlewrap"><h1>${STRINGS.karibu}</h1></div>
-      <div class="home-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="home-matatu">${matatuPhoto()}</div>
       <div class="sub">${STRINGS.jinaUliza}</div>
       <input class="nameinput" id="nameIn" type="text" maxlength="16"
              autocomplete="nickname" autocapitalize="words" spellcheck="false"
@@ -1003,28 +1078,26 @@ function renderOnboarding(){
   input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") submit(); });
   setScene(HOME_PHOTO, "open");   // same backdrop as the home screen
   show(node);
+  setCoinHudVisible(false);
   input.focus();
 }
 function renderHome(){
   const anyProgress = Object.values(state.levels).some(l=>l.completed || (l.foundAnswers&&l.foundAnswers.length));
   const node = el(`
     <div class="screen" id="home">
+      ${railHTML()}
       <div class="titlewrap"><h1>${STRINGS.gameTitle}</h1></div>
-      <div class="home-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="home-matatu">${matatuPhoto()}</div>
       <div class="sub">${state.username ? STRINGS.salamu(esc(state.username)) : STRINGS.tagline}</div>
       <div class="homebtns">
         <button class="btn red" id="playBtn">🚐 ${anyProgress ? STRINGS.endelea : STRINGS.anza}</button>
-        ${Cloud.enabled ? `<button class="btn green" id="boardBtn">🏆 ${STRINGS.ubaoShort}</button>` : ""}
-        <button class="btn ghost" id="setBtn">⚙️ ${STRINGS.mipangilio}</button>
       </div>
       <div class="credit">${STRINGS.matatuYako} “${state.matatuName}” · ${STRINGS.toleo}</div>
     </div>`);
   // The route map is the hub — play always goes there first, so the player
   // sees where the matatu is (and any traffic) before boarding.
   node.querySelector("#playBtn").onclick = ()=>{ actx(); renderMap(); };
-  const bb = node.querySelector("#boardBtn");
-  if(bb) bb.onclick = ()=> renderScoreboard();
-  node.querySelector("#setBtn").onclick = ()=> openSettings();
+  wireRail(node);
   setScene(HOME_PHOTO, "open");
   show(node);
   maybeMountDebug();
@@ -1084,11 +1157,12 @@ function outOfWords(){ return nextUnplayedLevel() === null; }
 // the map. At the end of the act there is no next stop.
 function legLabel(){
   const from = currentStop(), to = nextStop();
-  if(!to) return {kicker: STRINGS.safari, title: from.name};
+  if(!to) return {kicker: STRINGS.safari, title: from.name, dest: from.name};
   const done = SAVE.journey.levelsDoneThisLeg;
   return {
     kicker: STRINGS.ngaziYa(Math.min(done + 1, to.levelsToAdvance), to.levelsToAdvance),
     title: STRINGS.legOf(from.name, to.name),
+    dest: to.name,
   };
 }
 
@@ -1101,7 +1175,7 @@ function renderMap(){
       <div class="maphead">
         <button class="icon-btn" id="mHome">🏠</button>
         <h2>${STRINGS.mapTitle}</h2>
-        <div class="coins" id="coinBox"><span class="c"></span><span id="coinNum">${coins()}</span></div>
+        ${coinSlot()}
       </div>
       <div class="maproad"><div class="route" id="route"></div></div>
       <div class="mapfoot" id="mapFoot"></div>
@@ -1120,11 +1194,10 @@ function renderMap(){
         <!-- The matatu itself is drawn on the road segment below, so an
              arrived stop just gets a tick — no second vehicle. -->
         <div class="kmarker">${done ? "✓" : ""}</div>
+        <!-- Names only. Distances and fares are bookkeeping, not landmarks —
+             the map is for seeing where the matatu is going. -->
         <div class="klabel">
           <div class="kname">${s.name}</div>
-          <div class="kmeta">${s.kmFromNairobi} km${
-            i > 0 ? ` · ${STRINGS.nauli} ${s.fareFromPrevious}` : ""
-          }</div>
         </div>
       </div>`));
 
@@ -1163,7 +1236,6 @@ function renderMap(){
     foot.appendChild(el(`
       <div class="footcard">
         <div class="footline">${left === 1 ? STRINGS.ngaziMojaHadi(to.name) : STRINGS.ngaziKadhaa(left, to.name)}</div>
-        <div class="footsub">${STRINGS.nauli} ${to.fareFromPrevious} · ${legDistanceKm(SAVE.journey.stopIndex+1)} km</div>
         <button class="btn red" id="goLevel">🚐 ${STRINGS.twende}</button>
       </div>`));
     // Drive out of the map too, so every level is entered from the road
@@ -1194,17 +1266,17 @@ function startLevel(levelId){
   Cloud.track("level_start", puzzle.levelId);
   const node = el(`
     <div class="screen" id="intro">
+      ${railHTML()}
       <div class="kicker">${STRINGS.kiwango} ${puzzle.levelId} · <span class="pill ${puzzle.difficulty}">${STRINGS.diff[puzzle.difficulty]||puzzle.difficulty}</span></div>
       <div class="kicker">${nextStop() ? STRINGS.kituoKijacho : STRINGS.safari}</div>
       <h2>${nextStop() ? nextStop().name : currentStop().name}</h2>
       <div class="kicker">${legLabel().kicker}</div>
-      <div class="intro-matatu">${matatuSVG(state.matatuName)}</div>
+      <div class="intro-matatu">${matatuPhoto()}</div>
       <div class="depart">${STRINGS.matatuTayari}</div>
       <button class="btn red" id="go">${STRINGS.twende}</button>
-      <button class="tinylink" id="toMap">${STRINGS.ramaniShort}</button>
     </div>`);
   node.querySelector("#go").onclick = ()=> renderGame(puzzle);
-  node.querySelector("#toMap").onclick = renderMap;
+  wireRail(node);
   setScene(roadFor(puzzle.levelId), "open");
   show(node);
 }
@@ -1238,23 +1310,26 @@ function renderGame(puzzle){
   const leg = legLabel();
   const node = el(`
     <div class="screen" id="game">
+      ${railHTML()}
       <div class="hud">
-        <button class="icon-btn" id="gMap">🗺️</button>
+        <div class="railslot"></div>
         <div class="center">
           <div class="kicker">${G.isReplay ? STRINGS.marudio : leg.kicker}</div>
-          <div class="checkpoint">${leg.title}</div>
+          <!-- Destination only. The full "from → to" needs more width than the
+               rail leaves, and where you are heading is the useful half. -->
+          <div class="checkpoint">${leg.dest}</div>
         </div>
-        <div class="coins" id="coinBox"><span class="c"></span><span id="coinNum">${state.sarafu}</span></div>
+        ${coinSlot()}
       </div>
       ${totalBonus>0 ? `<div class="bonusbar"><button class="bonuschip" id="bonusChip">
           <span class="jar">🫙</span> ${STRINGS.manenoZiada}: <span id="bonusCount">${G.foundBonus.size}</span>/${totalBonus}</button></div>`:``}
       <div class="gridwrap"><div class="grid" id="grid"></div></div>
-      <div class="wordbar"><div class="wordbubble" id="wordBubble"></div></div>
+      <div class="wordbar">
+        <button class="ctrl" id="shuffleBtn" title="${STRINGS.changanya}">🔀<span class="lbl">${STRINGS.changanya}</span></button>
+        <div class="wordbubble" id="wordBubble"></div>
+        <button class="ctrl" id="hintBtn" title="${STRINGS.kidokezo}">💡<span class="lbl">${STRINGS.kidokezo}</span><span class="cost"><span class="c" style="width:10px;height:10px;display:inline-block;border-radius:50%;background:var(--yellow);vertical-align:-1px"></span>${CFG.hintCost}</span></button>
+      </div>
       <div class="wheelzone">
-        <div class="controls">
-          <button class="ctrl" id="shuffleBtn" title="${STRINGS.changanya}">🔀<span class="lbl">${STRINGS.changanya}</span></button>
-          <button class="ctrl" id="hintBtn" title="${STRINGS.kidokezo}">💡<span class="lbl">${STRINGS.kidokezo}</span><span class="cost"><span class="c" style="width:10px;height:10px;display:inline-block;border-radius:50%;background:var(--yellow);vertical-align:-1px"></span>${CFG.hintCost}</span></button>
-        </div>
         <div class="wheel" id="wheel">
           <div class="ring"></div>
           <svg class="linecanvas" id="lineCanvas" preserveAspectRatio="none"></svg>
@@ -1263,7 +1338,7 @@ function renderGame(puzzle){
       </div>
     </div>`);
 
-  node.querySelector("#gMap").onclick = renderMap;
+  wireRail(node);
   node.querySelector("#shuffleBtn").onclick = shuffleWheel;
   node.querySelector("#hintBtn").onclick = useHint;
   const bc = node.querySelector("#bonusChip");
@@ -1306,8 +1381,11 @@ function sizeGrid(){
   const {grid} = G;
   const wrap = document.querySelector(".gridwrap");
   if(!wrap) return;
-  const availW = wrap.clientWidth - 8;
-  const availH = wrap.clientHeight - 8;
+  // Measure the content box: clientWidth includes padding, and the left
+  // padding is the gutter holding the icon stack off the crossword.
+  const cs = getComputedStyle(wrap);
+  const availW = wrap.clientWidth  - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const availH = wrap.clientHeight - parseFloat(cs.paddingTop)  - parseFloat(cs.paddingBottom);
   const gap = 4;
   const cw = (availW - gap*(grid.cols-1)) / grid.cols;
   const ch = (availH - gap*(grid.rows-1)) / grid.rows;
@@ -1567,12 +1645,21 @@ function awardCoins(n, reason, meta){
   SFX.coin();
 }
 
-// Repaints any visible coin counter from the ledger balance.
+// Repaints the persistent coin badge (and any header slot holding space for
+// it, so the two never disagree on width) from the ledger balance.
 function refreshCoinHud(pop){
-  const box = document.getElementById("coinBox");
+  const box = document.getElementById("coinHud");
   const num = document.getElementById("coinNum");
-  if(num) num.textContent = coins();
+  const bal = coins();
+  if(num) num.textContent = bal;
+  document.querySelectorAll(".coinslot span:last-child").forEach(s => s.textContent = bal);
   if(pop && box){ box.classList.remove("coin-pop"); void box.offsetWidth; box.classList.add("coin-pop"); }
+}
+// The purse is meaningless before the player has a name, and the onboarding
+// screen is the one place it would be noise rather than information.
+function setCoinHudVisible(on){
+  const box = document.getElementById("coinHud");
+  if(box) box.classList.toggle("hidden", !on);
 }
 
 function updateBonusCount(){
@@ -1731,7 +1818,7 @@ function celebrate(puzzle, firstTime){
   const node = el(`
     <div class="screen" id="celebrate">
       <div class="celebrate-card">
-        <div class="arrive-matatu">${matatuSVG(state.matatuName)}</div>
+        <div class="arrive-matatu">${matatuPhoto()}</div>
         <h2>${pick(STRINGS.praise)}</h2>
         <div class="shout">🗣️ ${pick(STRINGS.makangaShout)}</div>
         ${!firstTime ? `<div class="depart">${STRINGS.marudioNote}</div>` : ``}
@@ -1741,7 +1828,6 @@ function celebrate(puzzle, firstTime){
         <div class="stat">
           <div>${coins()}<span>${STRINGS.jumlaSarafu}</span></div>
           <div>${bonusFound}/${puzzle.bonusWords.length}<span>${STRINGS.manenoZiada}</span></div>
-          <div>${currentStop().kmFromNairobi}<span>km</span></div>
         </div>
         <button class="btn red" id="next">🚐 ${STRINGS.kifuatacho}</button>
         <div style="margin-top:10px"><button class="btn ghost sm" id="cMap">${STRINGS.ramaniShort}</button></div>
@@ -1798,7 +1884,7 @@ function driveToNextLevel(){
   const overlay = el(`
     <div id="drive">
       <div class="drivelabel">${STRINGS.matatuInaendesha(to ? to.name : "")}</div>
-      <div class="drive-matatu"><img src="${DRIVE_MATATU}" alt="" decoding="async"></div>
+      <div class="drive-matatu"><img src="${MATATU_PHOTO}" alt="" decoding="async"></div>
       <div class="road"></div>
     </div>`);
   // Preview the road ahead while the matatu drives onto it. Keyed to the stop
@@ -1830,7 +1916,7 @@ function renderArrival(receipt){
   if(receipt.isMajor) setTimeout(launchConfetti, 500);
   setScene(roadForStop(SAVE.journey.stopIndex), "open");
 
-  const {from, to, farePaid, coinsRemaining, legKm, isMajor, isFinal} = receipt;
+  const {from, to, farePaid, coinsRemaining, isMajor, isFinal} = receipt;
 
   const node = el(`
     <div class="screen arrival ${isMajor ? "major" : "minor"}" id="arrival">
@@ -1838,20 +1924,19 @@ function renderArrival(receipt){
         ${isMajor ? `<div class="kikuu">★ ${STRINGS.kituoKikuu} ★</div>` : ``}
         <div class="arrivekicker">${STRINGS.umewasili}</div>
         <h1 class="arrivename">${to.name}</h1>
-        <div class="arrive-matatu">${matatuSVG(state.matatuName)}</div>
+        <div class="arrive-matatu">${matatuPhoto()}</div>
 
         <div class="farestrip">
           <span class="fareleg">${STRINGS.legOf(from.name, to.name)}</span>
           <span class="faredot">·</span>
           <span class="fareamt"><span class="c"></span>${farePaid}</span>
         </div>
-        <div class="farenote">${STRINGS.nauliImelipwa} · ${legKm} km</div>
+        <div class="farenote">${STRINGS.nauliImelipwa}</div>
 
         <p class="blurb">${to.blurb}</p>
 
         <div class="stat">
           <div>${coinsRemaining}<span>${STRINGS.sarafuZilizobaki}</span></div>
-          <div>${to.kmFromNairobi}<span>km</span></div>
           <div>${SAVE.journey.stopIndex}/${STOPS.length-1}<span>${STRINGS.vituo}</span></div>
         </div>
 
@@ -1878,11 +1963,10 @@ function renderJourneyEnd(){
   const node = el(`
     <div class="screen" id="finish">
       <h1>🏁 ${STOPS[STOPS.length-1].name}!</h1>
-      <div class="arrive-matatu" style="width:min(320px,82vw)">${matatuSVG(state.matatuName)}</div>
+      <div class="arrive-matatu" style="width:min(320px,82vw)">${matatuPhoto()}</div>
       <div class="fcard">
         <div style="font-weight:800;color:var(--green-d)">${STRINGS.mwishoSub}</div>
         <div class="stat">
-          <div>${s.kmReached}<span>${STRINGS.jumlaUmbali} (km)</span></div>
           <div>${s.farePaid}<span>${STRINGS.jumlaNauli}</span></div>
           <div>${s.coinsRemaining}<span>${STRINGS.jumlaSarafu}</span></div>
         </div>
