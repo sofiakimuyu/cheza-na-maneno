@@ -1937,9 +1937,9 @@ function celebrate(puzzle, firstTime){
   SFX.correct();
   const to = nextStop();
   const left = levelsRemainingThisLeg();
-  const bonusFound = (state.levels[puzzle.levelId].foundBonus || []).length;
   const node = el(`
     <div class="screen" id="celebrate">
+      ${railHTML()}
       <div class="celebrate-card">
         <div class="arrive-matatu">${matatuPhoto()}</div>
         <h2>${pick(STRINGS.praise)}</h2>
@@ -1948,16 +1948,11 @@ function celebrate(puzzle, firstTime){
         ${to ? `<div class="depart" style="color:var(--green-d);font-weight:800">
             ${left === 1 ? STRINGS.ngaziMojaHadi(to.name) : STRINGS.ngaziKadhaa(left, to.name)}
           </div>` : ``}
-        <div class="stat">
-          <div>${coins()}<span>${STRINGS.jumlaSarafu}</span></div>
-          <div>${bonusFound}/${puzzle.bonusWords.length}<span>${STRINGS.manenoZiada}</span></div>
-        </div>
         <button class="btn red" id="next">🚐 ${STRINGS.kifuatacho}</button>
-        <div style="margin-top:10px"><button class="btn ghost sm" id="cMap">${STRINGS.ramaniShort}</button></div>
       </div>
     </div>`);
   node.querySelector("#next").onclick = ()=> driveToNextLevel();
-  node.querySelector("#cMap").onclick = renderMap;
+  wireRail(node);
   // lift the veil so you can see the road you just travelled
   setScene(roadFor(puzzle.levelId), "open");
   show(node);
@@ -1978,6 +1973,7 @@ function renderTraffic(){
   const from = currentStop(), to = nextStop();
   const node = el(`
     <div class="screen" id="traffic">
+      ${railHTML()}
       <div class="hazard"></div>
       <div class="jam">
         <div class="jamcar a">${matatuSVG(state.matatuName, null, {people:false})}</div>
@@ -1991,11 +1987,10 @@ function renderTraffic(){
         <p class="tbody en">${STRINGS.trafficBodyEn}</p>
         ${to ? `<div class="tstuck">${STRINGS.trafficStuck(from.name, to.name)}</div>` : ``}
         <div class="tnote">${STRINGS.trafficNote}</div>
-        <button class="btn ghost sm" id="tMap">${STRINGS.ramaniShort}</button>
       </div>
       <div class="hazard"></div>
     </div>`);
-  node.querySelector("#tMap").onclick = renderMap;
+  wireRail(node);
   show(node);
 }
 
@@ -2039,34 +2034,20 @@ function renderArrival(receipt){
   if(receipt.isMajor) setTimeout(launchConfetti, 500);
   setScene(roadForStop(SAVE.journey.stopIndex), "open");
 
-  const {from, to, farePaid, coinsRemaining, isMajor, isFinal} = receipt;
+  const {to, isMajor, isFinal} = receipt;
 
   const node = el(`
     <div class="screen arrival ${isMajor ? "major" : "minor"}" id="arrival">
+      ${railHTML()}
       <div class="arrivecard">
         ${isMajor ? `<div class="kikuu">★ ${STRINGS.kituoKikuu} ★</div>` : ``}
         <div class="arrivekicker">${STRINGS.umewasili}</div>
         <h1 class="arrivename">${to.name}</h1>
         <div class="arrive-matatu">${matatuPhoto()}</div>
 
-        <div class="farestrip">
-          <span class="fareleg">${STRINGS.legOf(from.name, to.name)}</span>
-          <span class="faredot">·</span>
-          <span class="fareamt"><span class="c"></span>${farePaid}</span>
-        </div>
-        <div class="farenote">${STRINGS.nauliImelipwa}</div>
-
-        <p class="blurb">${to.blurb}</p>
-
-        <div class="stat">
-          <div>${coinsRemaining}<span>${STRINGS.sarafuZilizobaki}</span></div>
-          <div>${SAVE.journey.stopIndex}/${STOPS.length-1}<span>${STRINGS.vituo}</span></div>
-        </div>
-
         <button class="btn red" id="onward">
           ${isFinal ? "🏁 " + STRINGS.umefika : "🚐 " + STRINGS.endeleaSafari}
         </button>
-        <div style="margin-top:10px"><button class="btn ghost sm" id="aMap">${STRINGS.ramaniShort}</button></div>
       </div>
     </div>`);
 
@@ -2074,7 +2055,7 @@ function renderArrival(receipt){
     if(isFinal) renderJourneyEnd();
     else renderMap();
   };
-  node.querySelector("#aMap").onclick = renderMap;
+  wireRail(node);
   show(node);
 }
 
