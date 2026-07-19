@@ -1,7 +1,7 @@
 /* Matatu ya Maneno — service worker.
    Caches every asset on install so the game installs as a PWA and works
    fully offline. Bump CACHE when you change any file. */
-const CACHE = "matatu-ya-maneno-v4";
+const CACHE = "matatu-ya-maneno-v5";
 const ASSETS = [
   "./",
   "./index.html",

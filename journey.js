@@ -27,7 +27,7 @@ const SAVE_KEY_IDB = "current";
 
 // Bump when the shape of the save object changes, and add a step to
 // migrateSave() below. Never wipe a save on version change.
-const SAVE_VERSION = 2;
+const SAVE_VERSION = 3;
 
 // The pre-journey game persisted here. Read once, migrated, then left
 // alone (not deleted — an older build of the game may still be installed).
@@ -121,9 +121,15 @@ function defaultSave() {
       soundOn: true,
       matatuName: null, // filled by the game on first boot
       skinIdx: 0,
-      // Onboarding + cloud scoreboard. username is null until the player
-      // picks one; playerId is a stable anonymous id so the leaderboard can
-      // dedupe devices without any account.
+      // Onboarding + cloud account.
+      //
+      // `phone` is the account key: one number, one account, one username,
+      // and the same journey on any device. It is collected BEFORE the
+      // username, and stays null until the player signs in.
+      //
+      // `playerId` predates phone sign-in and is now only a local device
+      // tag. Nothing keys off it any more; kept so old saves stay readable.
+      phone: null,
       username: null,
       playerId: newId(),
       firstSeen: null,
@@ -187,8 +193,16 @@ function migrateSave(raw) {
     s.version = 2;
   }
 
+  // v2 -> v3: phone-number sign-in. Existing players keep their name and all
+  // their progress; `phone` starts null, so the next boot asks them for a
+  // number and adopts this save into the account they sign into.
+  if (s.version < 3) {
+    s.profile = { ...(s.profile || {}), phone: (s.profile && s.profile.phone) || null };
+    s.version = 3;
+  }
+
   // Future steps go here:
-  // if (s.version < 3) { ...; s.version = 3; }
+  // if (s.version < 4) { ...; s.version = 4; }
 
   // Defensive fill — a save written by a build that crashed mid-write, or
   // hand-edited via the debug panel, should still boot.
@@ -290,6 +304,71 @@ async function resetJourney() {
     /* ignore */
   }
   persist();
+}
+
+/* ======================================================================
+   CLOUD SAVE — resuming a journey on a different device
+
+   The account key is the phone number, so signing in on a new phone has
+   to bring the journey with it. These two functions are the whole of
+   that: rank a save by how far it got, and swap the in-memory save for
+   the cloud copy when the cloud copy is further along.
+
+   CONFLICT RULE: adopt the cloud save only if it is strictly AHEAD of
+   what is on this device. That is right in both directions —
+
+     * fresh device, empty local save  -> cloud wins, journey resumes;
+     * existing player adding a phone  -> local wins, nothing is lost.
+
+   Never the other way round. Silently overwriting local progress with a
+   staler cloud copy is the one failure a player would never forgive.
+   ====================================================================== */
+
+// Ordered comparison key: levels completed, then coins, then bonus words.
+// Same ordering the leaderboard uses, so "ahead" means the same thing in
+// both places.
+function progressRank(save) {
+  if (!save || typeof save !== "object") return [-1, -1, -1];
+  const levels = Object.values(save.levels || {});
+  const ledger = Array.isArray(save.ledger) ? save.ledger : [];
+  return [
+    levels.filter((l) => l && l.completed).length,
+    ledger.reduce((n, e) => n + (Number(e && e.delta) || 0), 0),
+    levels.reduce((n, l) => n + (l && l.foundBonus ? l.foundBonus.length : 0), 0),
+  ];
+}
+
+function saveIsAhead(candidate, current) {
+  const a = progressRank(candidate);
+  const b = progressRank(current);
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return a[i] > b[i];
+  }
+  return false; // dead even — keep what is already on the device
+}
+
+/* Adopt a save fetched from the cloud for `phone`.
+ *
+ * Returns true if the cloud save replaced the local one. Runs the cloud
+ * object through migrateSave() first: it may have been written by an
+ * older build on the player's other phone.
+ */
+function adoptCloudSave(raw, phone) {
+  if (!raw || typeof raw !== "object") return false;
+
+  const incoming = migrateSave(raw);
+  if (!saveIsAhead(incoming, SAVE)) return false;
+
+  SAVE = incoming;
+  // The number the player just signed in with is the truth, whatever the
+  // cloud copy happened to have been saved with.
+  SAVE.profile.phone = phone;
+  if (SAVE.ledger.length === 0) {
+    SAVE.ledger.push(makeEntry(ECONOMY.STARTING_BALANCE, "bonus", { opening: true }));
+  }
+  recomputeBalance();
+  persist();
+  return true;
 }
 
 /* ======================================================================

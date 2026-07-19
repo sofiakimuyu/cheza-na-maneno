@@ -1,12 +1,18 @@
-/* Matatu ya Maneno — cloud sync (scoreboard + telemetry).
+/* Matatu ya Maneno — cloud sync (accounts + scoreboard + telemetry).
  *
  * DESIGN RULE: this file must never be able to break the game.
  * The game is offline-first. Every call here is best-effort and swallows its
  * own errors; if Supabase is unconfigured, unreachable, rate-limited or
  * broken, gameplay continues exactly as it did before this file existed.
  *
- * Identity comes from Supabase Anonymous Auth, so auth.uid() is server-issued
- * and RLS can enforce "you may only write your own row". See supabase/schema.sql.
+ * IDENTITY: the player's phone number is the account key. The same number on
+ * any device loads the same username and the same saved journey. Supabase
+ * Anonymous Auth is still used, but only to obtain a JWT — every table is
+ * reachable solely through the security-definer RPCs in supabase/schema.sql,
+ * so a client can never dump the phone list.
+ *
+ * There is no OTP: the number is a convenience key, not a credential. See the
+ * TRUST note in supabase/schema.sql.
  */
 window.Cloud = (function(){
   const CFG = window.SUPABASE_CONFIG || {};
@@ -14,10 +20,49 @@ window.Cloud = (function(){
   const enabled = !!(CFG.url && CFG.anonKey);
 
   let client = null;
-  let uid = null;
+  let authed = false;
   let readyPromise = null;
 
   function log(...a){ if(window.CLOUD_DEBUG) console.log("[cloud]", ...a); }
+
+  /* ==================================================================
+     PHONE NUMBERS
+
+     Normalised to E.164 before they ever leave the device, so that
+     "0712 345 678", "712345678" and "+254712345678" are one account and
+     not three. Kenya (+254) is the default country; a number typed with
+     an explicit + keeps whatever country it names.
+     ================================================================== */
+  const DEFAULT_CC = "254";
+
+  function normalisePhone(raw){
+    let s = String(raw || "").trim();
+    const hadPlus = s.startsWith("+") || s.startsWith("00");
+    s = s.replace(/[^0-9]/g, "");
+    if(!s) return null;
+
+    if(hadPlus){
+      s = s.replace(/^00/, "");
+    }else if(s.startsWith("0")){
+      // Local trunk form: 0712345678 -> 254712345678
+      s = DEFAULT_CC + s.slice(1);
+    }else if(!s.startsWith(DEFAULT_CC)){
+      // Bare subscriber number: 712345678 -> 254712345678
+      s = DEFAULT_CC + s;
+    }
+
+    // Must match the CHECK constraint on accounts.phone.
+    if(!/^[1-9][0-9]{7,14}$/.test(s)) return null;
+    return "+" + s;
+  }
+
+  // For display: +254712345678 -> +254 712 345 678
+  function prettyPhone(e164){
+    const s = String(e164 || "");
+    if(!s.startsWith("+" + DEFAULT_CC)) return s;
+    const rest = s.slice(1 + DEFAULT_CC.length);
+    return "+" + DEFAULT_CC + " " + rest.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
+  }
 
   /* ---- queue: events recorded while offline, flushed on next success ---- */
   function readQueue(){
@@ -30,17 +75,24 @@ window.Cloud = (function(){
   function enqueue(row){ const q = readQueue(); q.push(row); writeQueue(q); }
 
   async function flushQueue(){
-    if(!client || !uid) return;
+    if(!client || !authed) return;
     const q = readQueue();
     if(!q.length) return;
-    const rows = q.map(r => ({...r, player_id: uid}));
-    const { error } = await client.from("events").insert(rows);
-    if(error){ log("flush failed, keeping queue", error.message); return; }
-    writeQueue([]);
-    log("flushed", rows.length, "events");
+    // event_log takes one row at a time; a queue this small (<=200) is fine
+    // to drain serially, and a partial drain just leaves the rest queued.
+    const rest = [];
+    for(const r of q){
+      if(!r.phone){ continue; }                      // pre-signin event, undeliverable
+      const { error } = await client.rpc("event_log", {
+        p_phone: r.phone, p_type: r.type, p_level_id: r.level_id,
+      });
+      if(error){ rest.push(r); }
+    }
+    writeQueue(rest);
+    log("flushed", q.length - rest.length, "events");
   }
 
-  /* ---- init: sign in anonymously, ensure a players row exists ---- */
+  /* ---- init: sign in anonymously purely to get a JWT ---- */
   async function init(){
     if(!enabled){ log("not configured — running offline-only"); return false; }
     try{
@@ -52,14 +104,14 @@ window.Cloud = (function(){
         if(error) throw error;
         sess = data;
       }
-      uid = (sess.session || sess).user.id;
-      log("signed in", uid);
-      return true;
+      authed = !!(sess.session || sess).user;
+      log("authenticated");
+      return authed;
     }catch(e){
       // Most likely causes: anonymous sign-ins disabled in the dashboard, or
       // the 30-req/hour per-IP rate limit. Either way: play on.
       log("init failed — offline-only", e && e.message);
-      client = null; uid = null;
+      client = null; authed = false;
       return false;
     }
   }
@@ -81,54 +133,88 @@ window.Cloud = (function(){
     };
   }
 
-  /* ---- public API — every one is safe to call unconditionally ---- */
+  /* ==================================================================
+     PUBLIC API — every one is safe to call unconditionally
+     ================================================================== */
 
-  // Create/refresh this player's scoreboard row.
-  async function syncPlayer(state){
+  /* Look up an account by phone.
+   *
+   * Returns:
+   *   { ok:true,  found:true,  account:{username, save, ...scores} }
+   *   { ok:true,  found:false }                — number is new, ask for a name
+   *   { ok:false }                             — offline / unreachable
+   *
+   * The caller MUST distinguish ok:false from found:false. Treating an
+   * offline lookup as "new player" would silently fork the account.
+   */
+  async function loadAccount(phone){
+    if(!phone) return { ok:false };
+    if(!await ready()) return { ok:false };
+    try{
+      const { data, error } = await client.rpc("account_load", { p_phone: phone });
+      if(error) throw error;
+      const row = (data || [])[0];
+      return row ? { ok:true, found:true, account:row } : { ok:true, found:false };
+    }catch(e){ log("loadAccount failed", e && e.message); return { ok:false }; }
+  }
+
+  // Create/refresh this player's account: identity, score and full save.
+  // `save` is the whole journey.js save object, so another device with the
+  // same number can resume from it.
+  async function syncPlayer(state, save){
+    if(!state || !state.phone || !state.username) return;
     if(!await ready()) return;
     try{
-      await client.from("players").upsert({
-        id: uid,
-        username: state.username,
-        last_seen_at: new Date().toISOString(),
-        ...scoreFrom(state),
+      const s = scoreFrom(state);
+      const { error } = await client.rpc("account_sync", {
+        p_phone:       state.phone,
+        p_username:    state.username,
+        p_save:        save || null,
+        p_levels_done: s.levels_done,
+        p_sarafu:      s.sarafu,
+        p_bonus_words: s.bonus_words,
+        p_best_level:  s.best_level,
       });
-      // Mark today active (composite PK makes repeats a no-op).
-      await client.from("player_days").insert({ player_id: uid }).select().maybeSingle();
+      if(error) throw error;
       await flushQueue();
     }catch(e){ log("syncPlayer failed", e && e.message); }
   }
 
   // Record a funnel/engagement event. Queues offline, never throws.
-  async function track(type, levelId){
-    const row = { type, level_id: (levelId == null ? null : levelId) };
+  async function track(type, levelId, phone){
     if(!enabled) return;
-    if(!client || !uid){ enqueue(row); ready().then(ok => { if(ok) flushQueue(); }); return; }
+    const row = { type, level_id: (levelId == null ? null : levelId), phone: phone || null };
+    // Events before sign-in have no account to hang off; drop them rather
+    // than queue rows that event_log() would only ignore.
+    if(!row.phone) return;
+    if(!client || !authed){ enqueue(row); ready().then(ok => { if(ok) flushQueue(); }); return; }
     try{
-      const { error } = await client.from("events").insert({ ...row, player_id: uid });
+      const { error } = await client.rpc("event_log", {
+        p_phone: row.phone, p_type: row.type, p_level_id: row.level_id,
+      });
       if(error) enqueue(row);
     }catch(e){ enqueue(row); }
   }
 
   // Public leaderboard. Returns [] on any failure so callers can render a
-  // clean empty state rather than an error.
-  async function leaderboard(limit = 50){
+  // clean empty state rather than an error. Phone numbers are never returned
+  // by the RPC — `isMe` is computed server-side from the number we pass in.
+  async function leaderboard(limit = 50, phone = null){
     if(!await ready()) return [];
     try{
-      const { data, error } = await client
-        .from("players")
-        .select("id,username,levels_done,sarafu,bonus_words")
-        .order("levels_done", { ascending: false })
-        .order("sarafu",      { ascending: false })
-        .order("bonus_words", { ascending: false })
-        .limit(limit);
+      const { data, error } = await client.rpc("leaderboard_top", {
+        lim: limit, p_phone: phone,
+      });
       if(error) throw error;
-      return (data || []).map(r => ({ ...r, isMe: r.id === uid }));
+      return (data || []).map(r => ({ ...r, isMe: !!r.is_me }));
     }catch(e){ log("leaderboard failed", e && e.message); return []; }
   }
 
   // Retry queued events when the device comes back online.
   window.addEventListener("online", ()=>{ ready().then(ok => { if(ok) flushQueue(); }); });
 
-  return { enabled, ready, syncPlayer, track, leaderboard, scoreFrom };
+  return {
+    enabled, ready, loadAccount, syncPlayer, track, leaderboard, scoreFrom,
+    normalisePhone, prettyPhone,
+  };
 })();

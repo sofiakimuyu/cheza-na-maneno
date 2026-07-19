@@ -599,6 +599,17 @@ const STRINGS = {
   // settings extras
   matatuYako: "Matatu yako:",
   toleo: "Toleo 1.0",
+  // onboarding / phone sign-in
+  simuUliza: "Nambari yako ya simu?",
+  simuMaelezo: "Nambari moja = akaunti moja. Ukirudi, safari yako inaendelea.",
+  simuKishika: "07XX XXX XXX",
+  simuSiSahihi: "Nambari si sahihi. Jaribu tena, mfano 0712 345 678.",
+  simuInatafuta: "Inatafuta akaunti yako…",
+  simuNjeMtandao: "Huna mtandao — safari yako itahifadhiwa hapa kwa sasa.",
+  simuYako: "Simu yako:",
+  simuKaribuTena: (n) => `Karibu tena, ${n}! Tunaendelea na safari yako.`,
+  simuSafariMpya: "Akaunti mpya — twende!",
+  endelea: "Endelea",
   // onboarding / username
   karibu: "Karibu!",
   jinaUliza: "Jina lako ni nani?",
@@ -693,8 +704,11 @@ const state = {
   get levels(){ return SAVE.levels; },
   get currentLevelId(){ return SAVE.levelCursor; },
   set currentLevelId(v){ SAVE.levelCursor = v; persist(); },
-  // Backing for onboarding + the cloud scoreboard. These live in the same
+  // Backing for onboarding + the cloud account. These live in the same
   // versioned save as everything else, not a second localStorage key.
+  // `phone` is the account key — see journey.js.
+  get phone(){ return SAVE.profile.phone; },
+  set phone(v){ SAVE.profile.phone = v; persist(); },
   get username(){ return SAVE.profile.username; },
   set username(v){ SAVE.profile.username = v; persist(); },
   get playerId(){ return SAVE.profile.playerId; },
@@ -711,6 +725,19 @@ function newPlayerId(){
 }
 function todayStamp(){ return new Date().toISOString().slice(0,10); } // YYYY-MM-DD
 function saveState(){ persist(); }
+
+/* Cloud wrappers. Every cloud call needs the phone (the account key), and
+ * syncing needs the whole save so another device on the same number can
+ * resume the journey. Funnelling them through here means no call site can
+ * forget either one. Both are no-ops until the player has signed in. */
+function cloudSync(){
+  if(!state.phone) return;
+  Cloud.syncPlayer(state, SAVE);
+}
+function cloudTrack(type, levelId){
+  if(!state.phone) return;
+  Cloud.track(type, levelId, state.phone);
+}
 function levelRecord(id){
   if(!state.levels[id]) state.levels[id] = {completed:false, foundAnswers:[], foundBonus:[]};
   return state.levels[id];
@@ -1041,10 +1068,106 @@ function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 /* ======================================================================
    HOME SCREEN
    ====================================================================== */
-/* First visit only: ask for a name so the scoreboard has someone to name. */
+/* ----------------------------------------------------------------------
+   ONBOARDING — phone first, then (new numbers only) a username.
+
+   The phone number is the account. One number = one account = one
+   username, and signing in with a number that has played before resumes
+   that journey, on any device. Only a number the server has never seen
+   gets asked for a name.
+   ---------------------------------------------------------------------- */
 function cleanName(raw){
   return String(raw||"").replace(/\s+/g," ").trim().slice(0,16);
 }
+
+function renderPhoneSignIn(){
+  const node = el(`
+    <div class="screen" id="home">
+      <div class="titlewrap"><h1>${STRINGS.karibu}</h1></div>
+      <div class="home-matatu">${matatuPhoto()}</div>
+      <div class="sub">${STRINGS.simuUliza}</div>
+      <input class="nameinput" id="phoneIn" type="tel" inputmode="tel" maxlength="20"
+             autocomplete="tel" spellcheck="false"
+             placeholder="${STRINGS.simuKishika}" value="${esc(state.phone || "")}">
+      <div class="namehint" id="phoneHint"></div>
+      <div class="homebtns">
+        <button class="btn red" id="phoneBtn">🚐 ${STRINGS.endelea}</button>
+      </div>
+      <div class="credit">${STRINGS.simuMaelezo}</div>
+    </div>`);
+  const input = node.querySelector("#phoneIn");
+  const hint  = node.querySelector("#phoneHint");
+  const btn   = node.querySelector("#phoneBtn");
+  let busy = false;
+
+  const submit = async ()=>{
+    if(busy) return;
+    const phone = Cloud.normalisePhone(input.value);
+    if(!phone){
+      hint.style.color = "";
+      hint.textContent = STRINGS.simuSiSahihi;
+      input.focus();
+      return;
+    }
+    actx();
+    busy = true;
+    btn.disabled = true;
+    hint.style.color = "var(--ink-soft)";
+    hint.textContent = STRINGS.simuInatafuta;
+
+    const res = await Cloud.loadAccount(phone);
+
+    state.phone = phone;
+    if(!state.firstSeen) state.firstSeen = todayStamp();
+    saveState();
+
+    // Known number: this is a returning player. Their account's username is
+    // the truth (one phone, one name), and their cloud save resumes the
+    // journey — but only if it is further along than whatever is on this
+    // device. See the CONFLICT RULE in journey.js.
+    if(res.ok && res.found){
+      // adoptCloudSave() stamps the phone onto whatever save wins, so the
+      // account key survives the swap.
+      adoptCloudSave(res.account.save, phone);
+      state.username = res.account.username;
+      saveState();
+      paintMatatu();            // an adopted save may predate the paint job
+      SFX.select && SFX.select();
+      renderHome();
+      toast(STRINGS.simuKaribuTena(state.username), "good");
+      cloudSync();              // push the merged result straight back up
+      return;
+    }
+
+    // Unknown number: brand-new account, so ask for a name.
+    if(res.ok && !res.found){
+      SFX.select && SFX.select();
+      renderOnboarding();
+      return;
+    }
+
+    // Offline. We genuinely cannot tell whether this number has an account,
+    // and guessing "new" would fork it — so decide nothing. Play locally;
+    // the next successful cloudSync() attaches this device to the number.
+    busy = false;
+    btn.disabled = false;
+    if(state.username){
+      renderHome();
+      toast(STRINGS.simuNjeMtandao, "");
+    }else{
+      renderOnboarding();
+    }
+  };
+
+  btn.onclick = submit;
+  input.addEventListener("input", ()=>{ hint.textContent = ""; });
+  input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") submit(); });
+  setScene(HOME_PHOTO, "open");   // same backdrop as the home screen
+  show(node);
+  setCoinHudVisible(false);
+  input.focus();
+}
+
 function renderOnboarding(){
   const node = el(`
     <div class="screen" id="home">
@@ -1069,7 +1192,7 @@ function renderOnboarding(){
     state.username = name;
     state.firstSeen = todayStamp();
     saveState();
-    Cloud.syncPlayer(state);
+    cloudSync();
     SFX.select && SFX.select();
     renderHome();
   };
@@ -1120,7 +1243,7 @@ function renderScoreboard(){
   const list = node.querySelector("#boardList");
   const msg  = node.querySelector("#boardMsg");
 
-  Cloud.leaderboard(50).then(rows=>{
+  Cloud.leaderboard(50, state.phone).then(rows=>{
     if(!rows.length){
       msg.textContent = navigator.onLine ? STRINGS.ubaoHakuna : STRINGS.ubaoNjeMtandao;
       return;
@@ -1263,7 +1386,7 @@ function renderMap(){
    ====================================================================== */
 function startLevel(levelId){
   const puzzle = PUZZLES.find(p=>p.levelId===levelId) || PUZZLES[0];
-  Cloud.track("level_start", puzzle.levelId);
+  cloudTrack("level_start", puzzle.levelId);
   const node = el(`
     <div class="screen" id="intro">
       ${railHTML()}
@@ -1733,7 +1856,7 @@ function useHint(){
   if(!empties.length){ toast(STRINGS.hakunaKuonyesha, "nudge"); return; }
   postLedger(-CFG.hintCost, "hint", {levelId: G.puzzle.levelId});
   noteHintUsed();
-  Cloud.track("hint_used", G.puzzle.levelId);
+  cloudTrack("hint_used", G.puzzle.levelId);
   refreshCoinHud(false);
   const cell = empties[Math.floor(Math.random()*empties.length)];
   cell.filled = true; cell.hinted = true;
@@ -1794,8 +1917,8 @@ function checkComplete(){
   }
   saveState();
 
-  Cloud.track("level_complete", G.puzzle.levelId);
-  Cloud.syncPlayer(state);
+  cloudTrack("level_complete", G.puzzle.levelId);
+  cloudSync();
   setTimeout(()=>{
     if(departure) renderArrival(departure);
     else celebrate(G.puzzle, firstTime);
@@ -2055,6 +2178,10 @@ function openSettings(){
       <button class="btn sm" id="nameBtn">${esc(state.username || "—")}</button>
     </div>
     <div class="row">
+      <span>📱 ${STRINGS.simuYako}</span>
+      <strong>${esc(state.phone ? Cloud.prettyPhone(state.phone) : "—")}</strong>
+    </div>
+    <div class="row">
       <span>🚐 ${STRINGS.matatuYako}</span>
       <strong>${state.matatuName}</strong>
     </div>
@@ -2088,7 +2215,7 @@ function editName(){
     const name = cleanName(input.value);
     if(name.length < 2){ hint.textContent = STRINGS.jinaFupi; input.focus(); return; }
     state.username = name; saveState();
-    Cloud.syncPlayer(state);
+    cloudSync();
     ov.remove(); renderHome();
   };
   ov.querySelector("#saveName").onclick = submit;
@@ -2108,7 +2235,10 @@ function confirmReset(){
   ov.querySelector("#doReset").onclick = async ()=>{
     await resetJourney();
     paintMatatu();
-    ov.remove(); renderOnboarding();   // reset clears the name too — ask again
+    // Reset clears the phone and the name, so sign-in starts over. The cloud
+    // account is untouched: signing back in with the same number restores
+    // that journey, which is what makes this safe to offer.
+    ov.remove(); renderPhoneSignIn();
   };
 }
 
@@ -2173,7 +2303,7 @@ function openDebugPanel(){
   };
   ov.querySelector("#dbgDump").onclick = ()=>{ console.log(DEBUG_API.dump()); toast("Dumped to console",""); };
   ov.querySelector("#dbgReset").onclick = async ()=>{
-    await resetJourney(); paintMatatu(); ov.remove(); renderHome();
+    await resetJourney(); paintMatatu(); ov.remove(); renderPhoneSignIn();
   };
 }
 
@@ -2203,9 +2333,41 @@ async function boot(){
     console.warn("save unavailable, playing unsaved", e);
   }
   paintMatatu();
-  // Onboarding collects the name the cloud scoreboard ranks under; returning
-  // players go straight home.
-  state.username ? renderHome() : renderOnboarding();
+
+  // Sign-in is phone first, then a name for numbers the server has never
+  // seen. A player with both already stored goes straight home.
+  if(state.phone && state.username){
+    renderHome();
+    resumeFromCloud();
+  }else if(state.phone){
+    renderOnboarding();   // signed in, but the name step never completed
+  }else{
+    renderPhoneSignIn();
+  }
+}
+
+/* Background check for progress made on another device.
+ *
+ * Deliberately not awaited by boot(): the player is already looking at the
+ * home screen, and a slow network must never hold that up. If the cloud
+ * turns out to be ahead we swap the save in and repaint — but only if the
+ * player is still sitting on the home screen, because yanking the save out
+ * from under a puzzle in progress would lose the words they just found.
+ */
+async function resumeFromCloud(){
+  if(!state.phone) return;
+  const res = await Cloud.loadAccount(state.phone);
+  if(!res.ok || !res.found) return;
+
+  const onHome = !!document.getElementById("home");
+  if(onHome && adoptCloudSave(res.account.save, state.phone)){
+    state.username = res.account.username;
+    saveState();
+    paintMatatu();
+    renderHome();
+    toast(STRINGS.simuKaribuTena(state.username), "good");
+  }
+  cloudSync();
 }
 boot();
 
